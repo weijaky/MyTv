@@ -57,25 +57,25 @@ public final class MovieList {
                 "播放室1", "播放室2", "播放室3", "播放室3", "播放室4"
         };
         String videoUrl[] = {
-                "http://www.weijaky.top/movie/test1.mp4",
-                "http://www.weijaky.top/movie/test2.mp4",
-                "http://www.weijaky.top/movie/test3.mp4",
-                "http://www.weijaky.top/movie/test4.mp4",
-                "http://www.weijaky.top/movie/test5.mp4"
+                Config.MAIN_SERVER + Config.MOVIE_DIR + "/test1.mp4",
+                Config.MAIN_SERVER + Config.MOVIE_DIR + "test2.mp4",
+                Config.MAIN_SERVER + Config.MOVIE_DIR + "test3.mp4",
+                Config.MAIN_SERVER + Config.MOVIE_DIR + "test4.mp4",
+                Config.MAIN_SERVER + Config.MOVIE_DIR + "test5.mp4"
         };
         String bgImageUrl[] = {
-                "http://www.weijaky.top/movie/image/test1.png",
-                "http://www.weijaky.top/movie/image/test2.png",
-                "http://www.weijaky.top/movie/image/test3.png",
-                "http://www.weijaky.top/movie/image/test4.png",
-                "http://www.weijaky.top/movie/image/test5.png"
+                Config.MAIN_SERVER + Config.MOVIE_DIR + Config.IMAGE_DIR + "/test1.png",
+                Config.MAIN_SERVER + Config.MOVIE_DIR + Config.IMAGE_DIR + "/test2.png",
+                Config.MAIN_SERVER + Config.MOVIE_DIR + Config.IMAGE_DIR + "/test3.png",
+                Config.MAIN_SERVER + Config.MOVIE_DIR + Config.IMAGE_DIR + "/test4.png",
+                Config.MAIN_SERVER + Config.MOVIE_DIR + Config.IMAGE_DIR + "/test5.png"
         };
         String cardImageUrl[] = {
-                "http://www.weijaky.top/movie/image/test1.png",
-                "http://www.weijaky.top/movie/image/test2.png",
-                "http://www.weijaky.top/movie/image/test3.png",
-                "http://www.weijaky.top/movie/image/test4.png",
-                "http://www.weijaky.top/movie/image/test5.png"
+                Config.MAIN_SERVER + Config.MOVIE_DIR + Config.IMAGE_DIR + "/test1.png",
+                Config.MAIN_SERVER + Config.MOVIE_DIR + Config.IMAGE_DIR + "/test2.png",
+                Config.MAIN_SERVER + Config.MOVIE_DIR + Config.IMAGE_DIR + "/test3.png",
+                Config.MAIN_SERVER + Config.MOVIE_DIR + Config.IMAGE_DIR + "/test4.png",
+                Config.MAIN_SERVER + Config.MOVIE_DIR + Config.IMAGE_DIR + "/test5.png"
         };
 
         for (int index = 0; index < title.length; ++index) {
