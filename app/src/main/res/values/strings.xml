@@ -1,0 +1,23 @@
+<resources>
+    <string name="app_name">MyTv</string>
+    <string name="browse_title"><![CDATA[Videos by Your Company]]></string>
+    <string name="related_movies">相关视频</string>
+    <string name="grid_view">Grid View</string>
+    <string name="error_fragment">错误的Fragment</string>
+    <string name="personal_settings">个人设置</string>
+    <string name="watch_trailer_1">预览</string>
+    <string name="watch_trailer_2">免费</string>
+    <string name="rent_1">限购</string>
+    <string name="rent_2">$1.99</string>
+    <string name="buy_1">购买</string>
+    <string name="buy_2">$9.99</string>
+    <string name="movie">视频</string>
+    <string name="should_start">应该启动</string>
+
+    <!-- Error messages -->
+    <string name="video_error_media_load_timeout">媒体加载超时</string>
+    <string name="video_error_server_inaccessible">媒体服务器找不到</string>
+    <string name="video_error_unknown_error">加载视频失败！</string>
+    <string name="error_fragment_message">一个错误产生</string>
+    <string name="dismiss_error">关闭</string>
+</resources>
