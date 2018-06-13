@@ -14,7 +14,6 @@ import android.os.ResultReceiver;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v17.leanback.media.PlaybackControlGlue;
-import android.support.v17.leanback.media.PlaybackGlue;
 import android.support.v17.leanback.media.PlaybackGlueHost;
 import android.support.v17.leanback.media.SurfaceHolderGlueHost;
 import android.support.v17.leanback.widget.Action;
@@ -24,6 +23,8 @@ import android.support.v17.leanback.widget.PlaybackControlsRow;
 import android.support.v17.leanback.widget.Presenter;
 import android.support.v17.leanback.widget.Row;
 import android.support.v17.leanback.widget.RowPresenter;
+import android.support.v4.media.session.MediaSessionCompat;
+import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.SurfaceHolder;
@@ -32,12 +33,10 @@ import android.view.View;
 import java.io.IOException;
 import java.util.List;
 
-import static android.media.session.MediaSession.*;
-
 /**
  * This glue extends the {@link android.support.v17.leanback.media.PlaybackControlGlue} with a
  * {@link MediaPlayer} synchronization. It supports 7 actions:
- *
+ * <p>
  * <ul>
  * <li>{@link android.support.v17.leanback.widget.PlaybackControlsRow.FastForwardAction}</li>
  * <li>{@link android.support.v17.leanback.widget.PlaybackControlsRow.RewindAction}</li>
@@ -50,19 +49,33 @@ import static android.media.session.MediaSession.*;
  * @hide
  */
 public class TvMediaPlayerGlue extends PlaybackControlGlue implements
-        OnItemViewSelectedListener{
+        OnItemViewSelectedListener {
 
     public static final int NO_REPEAT = 0;
     public static final int REPEAT_ONE = 1;
     public static final int REPEAT_ALL = 2;
+
+    private static final long MEDIA_SESSION_ACTIONS =
+            PlaybackStateCompat.ACTION_PLAY
+                    | PlaybackStateCompat.ACTION_PAUSE
+                    | PlaybackStateCompat.ACTION_PLAY_PAUSE
+                    | PlaybackStateCompat.ACTION_SKIP_TO_NEXT
+                    | PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS
+                    | PlaybackStateCompat.ACTION_STOP
+                    | PlaybackStateCompat.ACTION_STOP
+                    | PlaybackStateCompat.ACTION_PREPARE
+                    | PlaybackStateCompat.ACTION_SEEK_TO;
 
     public static final int FAST_FORWARD_REWIND_STEP = 10 * 1000; // in milliseconds
     public static final int FAST_FORWARD_REWIND_REPEAT_DELAY = 200; // in milliseconds
     private static final String TAG = "MediaPlayerGlue";
     protected final PlaybackControlsRow.ThumbsDownAction mThumbsDownAction;
     protected final PlaybackControlsRow.ThumbsUpAction mThumbsUpAction;
+    protected final PlaybackControlsRow.PictureInPictureAction mPictureInPictureAction;
+    protected final PlaybackControlsRow.ClosedCaptioningAction mClosedCaptioningAction;
     MediaPlayer mPlayer = new MediaPlayer();
-    MediaSession session;
+    MediaSessionCompat mMediaSession;
+    PipCallback pipCallback;
     private final PlaybackControlsRow.RepeatAction mRepeatAction;
     private Runnable mRunnable;
     private Handler mHandler = new Handler();
@@ -76,6 +89,10 @@ public class TvMediaPlayerGlue extends PlaybackControlGlue implements
     private String mTitle;
     private Drawable mCover;
     private PlaybackState state;
+    private PlaybackStateCompat mPlaybackStateCompat;
+
+    private boolean isInPictureInPictureMode;
+    private MediaSession.Token mediaSession;
 
     /**
      * Sets the drawable representing cover image.
@@ -119,21 +136,36 @@ public class TvMediaPlayerGlue extends PlaybackControlGlue implements
     public TvMediaPlayerGlue(
             Context context, int[] fastForwardSpeeds, int[] rewindSpeeds) {
         super(context, fastForwardSpeeds, rewindSpeeds);
-        session = new MediaSession(context, "com.huawei.demo.mytv");
-        session.getSessionToken();
-        session.setCallback(sessionCallback);
-        setPlayerCallback(new PlayerCallback() {
-            @Override
-            public void onPlayStateChanged(PlaybackGlue glue) {
-                super.onPlayStateChanged(glue);
-            }
-        });
+
+
+        initMediaSession(context);
+
         // Instantiate secondary actions
         mRepeatAction = new PlaybackControlsRow.RepeatAction(getContext());
         mThumbsDownAction = new PlaybackControlsRow.ThumbsDownAction(getContext());
         mThumbsUpAction = new PlaybackControlsRow.ThumbsUpAction(getContext());
+        mClosedCaptioningAction = new PlaybackControlsRow.ClosedCaptioningAction(getContext());
+        mPictureInPictureAction = new PlaybackControlsRow.PictureInPictureAction(getContext());
+
         mThumbsDownAction.setIndex(PlaybackControlsRow.ThumbsAction.INDEX_OUTLINE);
         mThumbsUpAction.setIndex(PlaybackControlsRow.ThumbsAction.INDEX_OUTLINE);
+
+
+    }
+
+    private void initMediaSession(Context context) {
+        mPlaybackStateCompat = new PlaybackStateCompat.Builder()
+                .setActions(MEDIA_SESSION_ACTIONS)
+                .setState(PlaybackStateCompat.STATE_NONE, 0, 1.0f).build();
+        mMediaSession = new MediaSessionCompat(context, TvMediaPlayerGlue.class.getPackage().getName());
+        mMediaSession.setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS |
+                MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS
+        );
+        mMediaSession.getSessionToken();
+        mMediaSession.setCallback(sessionCallback);
+        mMediaSession.setPlaybackState(mPlaybackStateCompat);
+        mMediaSession.setActive(true);
+
     }
 
     @Override
@@ -151,16 +183,18 @@ public class TvMediaPlayerGlue extends PlaybackControlGlue implements
      * before playing a second one.
      */
     public void reset() {
+        Log.d("wjj", "===========reset============");
         changeToUnitialized();
         mPlayer.reset();
     }
 
     void changeToUnitialized() {
         if (mInitialized) {
+            Log.d("wjj", "===========changeToUnitialized============");
             mInitialized = false;
             List<PlayerCallback> callbacks = getPlayerCallbacks();
             if (callbacks != null) {
-                for (PlayerCallback callback: callbacks) {
+                for (PlayerCallback callback : callbacks) {
                     callback.onPreparedStateChanged(TvMediaPlayerGlue.this);
                 }
             }
@@ -171,6 +205,7 @@ public class TvMediaPlayerGlue extends PlaybackControlGlue implements
      * Release internal MediaPlayer. Should not use the object after call release().
      */
     public void release() {
+        Log.d("wjj", "===========release============");
         changeToUnitialized();
         mPlayer.release();
     }
@@ -180,8 +215,11 @@ public class TvMediaPlayerGlue extends PlaybackControlGlue implements
         if (getHost() instanceof SurfaceHolderGlueHost) {
             ((SurfaceHolderGlueHost) getHost()).setSurfaceHolderCallback(null);
         }
+
         reset();
         release();
+
+
         super.onDetachedFromHost();
     }
 
@@ -190,6 +228,8 @@ public class TvMediaPlayerGlue extends PlaybackControlGlue implements
         secondaryActionsAdapter.add(mRepeatAction);
         secondaryActionsAdapter.add(mThumbsDownAction);
         secondaryActionsAdapter.add(mThumbsUpAction);
+        secondaryActionsAdapter.add(mClosedCaptioningAction);
+        secondaryActionsAdapter.add(mPictureInPictureAction);
     }
 
     /**
@@ -238,6 +278,10 @@ public class TvMediaPlayerGlue extends PlaybackControlGlue implements
                 mThumbsDownAction.setIndex(PlaybackControlsRow.ThumbsAction.INDEX_SOLID);
                 mThumbsUpAction.setIndex(PlaybackControlsRow.ThumbsAction.INDEX_OUTLINE);
             }
+        } else if (action == mPictureInPictureAction) {
+            pipCallback.onEnterPictureInPictur();
+        } else if (action == mClosedCaptioningAction) {
+
         }
         onMetadataChanged();
     }
@@ -277,8 +321,14 @@ public class TvMediaPlayerGlue extends PlaybackControlGlue implements
         return mTitle != null && (mMediaSourcePath != null || mMediaSourceUri != null);
     }
 
+
     @Override
     public boolean isMediaPlaying() {
+        Log.d("", "==mInitialized=" + mInitialized);
+        if (mPlayer != null) {
+//            Log.d("","==mInitialized="+mPlayer.isPlaying());
+        }
+
         return mInitialized && mPlayer.isPlaying();
     }
 
@@ -330,11 +380,12 @@ public class TvMediaPlayerGlue extends PlaybackControlGlue implements
         if (!mInitialized || mPlayer.isPlaying()) {
             return;
         }
+        Log.d("wjj", "=====play============");
         mPlayer.start();
         onMetadataChanged();
         onStateChanged();
         updateProgress();
-        session.setPlaybackState(new PlaybackState.Builder().setState(PlaybackState.STATE_PLAYING,0,0).build());
+        updatePlaybackState();
     }
 
     @Override
@@ -343,7 +394,7 @@ public class TvMediaPlayerGlue extends PlaybackControlGlue implements
             mPlayer.pause();
             onStateChanged();
         }
-        session.setPlaybackState(new PlaybackState.Builder().setState(PlaybackState.STATE_PAUSED,0,0).build());
+        updatePlaybackState();
     }
 
     /**
@@ -351,7 +402,7 @@ public class TvMediaPlayerGlue extends PlaybackControlGlue implements
      * loop mode.
      */
     public void setMode(int mode) {
-        switch(mode) {
+        switch (mode) {
             case NO_REPEAT:
                 mOnCompletionListener = null;
                 break;
@@ -401,9 +452,11 @@ public class TvMediaPlayerGlue extends PlaybackControlGlue implements
      * @see MediaPlayer#setDataSource(String)
      */
     public boolean setMediaSource(Uri uri) {
+
         if (mMediaSourceUri != null ? mMediaSourceUri.equals(uri) : uri == null) {
             return false;
         }
+        Log.d("wjj", "=======setMediaSource=====2======" + uri.getPath());
         mMediaSourceUri = uri;
         mMediaSourcePath = null;
         prepareMediaForPlaying();
@@ -421,6 +474,7 @@ public class TvMediaPlayerGlue extends PlaybackControlGlue implements
         if (mMediaSourcePath != null ? mMediaSourcePath.equals(path) : path == null) {
             return false;
         }
+        Log.d("wjj", "=======setMediaSource====1=======" + path);
         mMediaSourceUri = null;
         mMediaSourcePath = path;
         prepareMediaForPlaying();
@@ -429,6 +483,7 @@ public class TvMediaPlayerGlue extends PlaybackControlGlue implements
 
     private void prepareMediaForPlaying() {
         reset();
+
         try {
             if (mMediaSourceUri != null) {
                 mPlayer.setDataSource(getContext(), mMediaSourceUri);
@@ -445,10 +500,11 @@ public class TvMediaPlayerGlue extends PlaybackControlGlue implements
         mPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
             @Override
             public void onPrepared(MediaPlayer mp) {
+                Log.d("wjj", "==========onPrepared============");
                 mInitialized = true;
                 List<PlayerCallback> callbacks = getPlayerCallbacks();
                 if (callbacks != null) {
-                    for (PlayerCallback callback: callbacks) {
+                    for (PlayerCallback callback : callbacks) {
                         callback.onPreparedStateChanged(TvMediaPlayerGlue.this);
                     }
                 }
@@ -469,6 +525,12 @@ public class TvMediaPlayerGlue extends PlaybackControlGlue implements
             }
         });
         mPlayer.prepareAsync();
+
+//        try {
+//            mPlayer.prepare();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
         onStateChanged();
     }
 
@@ -504,6 +566,24 @@ public class TvMediaPlayerGlue extends PlaybackControlGlue implements
         return mInitialized;
     }
 
+    public void setPipCallback() {
+
+    }
+
+    public MediaSessionCompat getMediaSession() {
+        return mMediaSession;
+    }
+
+    public interface PipCallback {
+        void onEnterPictureInPictur();
+
+        void onExitPictureInPictur();
+    }
+
+    public void setPipCallback(PipCallback callback) {
+        pipCallback = callback;
+    }
+
     /**
      * Implements {@link SurfaceHolder.Callback} that can then be set on the
      * {@link PlaybackGlueHost}.
@@ -524,7 +604,7 @@ public class TvMediaPlayerGlue extends PlaybackControlGlue implements
         }
     }
 
-    MediaSession.Callback sessionCallback = new MediaSession.Callback(){
+    MediaSessionCompat.Callback sessionCallback = new MediaSessionCompat.Callback() {
         @Override
         public void onCommand(@NonNull String command, @Nullable Bundle args, @Nullable ResultReceiver cb) {
             super.onCommand(command, args, cb);
@@ -533,21 +613,28 @@ public class TvMediaPlayerGlue extends PlaybackControlGlue implements
         @Override
         public void onPrepare() {
             super.onPrepare();
+            updatePlaybackState();
         }
 
         @Override
         public void onPlay() {
             super.onPlay();
+            play();
+            updatePlaybackState();
+
         }
 
         @Override
         public void onPause() {
             super.onPause();
+            pause();
+            updatePlaybackState();
         }
 
         @Override
         public void onStop() {
             super.onStop();
+//            updatePlaybackState();
         }
 
         @Override
@@ -556,5 +643,27 @@ public class TvMediaPlayerGlue extends PlaybackControlGlue implements
         }
     };
 
+    public void updatePlaybackState() {
+        int state = isPlaying() ? PlaybackStateCompat.STATE_PLAYING : PlaybackStateCompat.STATE_PAUSED;
+
+        Log.d("wjj", "============updatePlaybackState=====state=====" + state);
+        mMediaSession.setPlaybackState(
+                new PlaybackStateCompat.Builder()
+                        .setActions(MEDIA_SESSION_ACTIONS)
+                        .setState(state, getCurrentPosition(), 1)
+                        .build());
+    }
+
+    public void setInPictureInPictureMode(boolean inPictureInPictureMode) {
+        isInPictureInPictureMode = inPictureInPictureMode;
+    }
+
+    @Override
+    public void updateProgress() {
+        int position = getCurrentPosition();
+        if (getControlsRow() != null) {
+            getControlsRow().setCurrentTime(position);
+        }
+    }
 }
 

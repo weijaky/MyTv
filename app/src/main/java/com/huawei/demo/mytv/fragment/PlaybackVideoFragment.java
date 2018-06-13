@@ -14,61 +14,108 @@
 
 package com.huawei.demo.mytv.fragment;
 
+import android.content.Context;
+import android.media.MediaMetadata;
+import android.media.session.MediaController;
+import android.media.session.MediaSessionManager;
+import android.media.session.PlaybackState;
 import android.os.Bundle;
+import android.os.RemoteException;
 import android.support.v17.leanback.app.VideoSupportFragment;
 import android.support.v17.leanback.app.VideoSupportFragmentGlueHost;
 import android.support.v17.leanback.media.MediaPlayerGlue;
 import android.support.v17.leanback.media.PlaybackGlue;
-import android.support.v17.leanback.widget.OnItemViewSelectedListener;
-import android.support.v17.leanback.widget.PlaybackControlsRow;
-import android.support.v17.leanback.widget.Presenter;
-import android.support.v17.leanback.widget.Row;
-import android.support.v17.leanback.widget.RowPresenter;
+import android.support.v4.media.MediaMetadataCompat;
+import android.support.v4.media.session.MediaControllerCompat;
+import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
-import android.widget.MediaController;
 
-import com.huawei.demo.mytv.MyMediaPlayerGlue;
+import com.huawei.demo.mytv.TvMediaPlayerGlue;
+import com.huawei.demo.mytv.activity.DetailsActivity;
 import com.huawei.demo.mytv.data.Config;
 import com.huawei.demo.mytv.data.Movie;
-import com.huawei.demo.mytv.activity.DetailsActivity;
 
 /**
  * Handles video playback with media controls.
  */
-public class PlaybackVideoFragment extends VideoSupportFragment
-        implements OnItemViewSelectedListener
-{
+public class PlaybackVideoFragment extends VideoSupportFragment {
     private static final String TAG = "PlaybackVideoFragment";
     private static final boolean DEBUG = Config.DEBUG;
 
-    private MyMediaPlayerGlue mMediaPlayerGlue;
-    private PlaybackControlsRow.PlayPauseAction mPlayPauseAction;
+    private TvMediaPlayerGlue mMediaPlayerGlue;
+    private MediaControllerCompat mMediaController;
+    private MediaSessionManager mMediaSessionManager;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        Log.d("wjj", "=========PlaybackActivity=====onCreate===========");
         final Movie movie = (Movie) getActivity().getIntent().getSerializableExtra(DetailsActivity.MOVIE);
 
         VideoSupportFragmentGlueHost glueHost = new VideoSupportFragmentGlueHost(PlaybackVideoFragment.this);
-        mMediaPlayerGlue = new MyMediaPlayerGlue(getActivity());
+        mMediaPlayerGlue = new TvMediaPlayerGlue(getActivity());
         mMediaPlayerGlue.setHost(glueHost);
         mMediaPlayerGlue.setMode(MediaPlayerGlue.NO_REPEAT);
-        mMediaPlayerGlue.setPlayerCallback(new PlaybackGlue.PlayerCallback() {
+        mMediaPlayerGlue.addPlayerCallback(new PlaybackGlue.PlayerCallback() {
+
             @Override
-            public void onReadyForPlayback() {
+            public void onPreparedStateChanged(PlaybackGlue glue) {
+                super.onPreparedStateChanged(glue);
                 mMediaPlayerGlue.play();
+            }
+        });
+
+        mMediaPlayerGlue.setPipCallback(new TvMediaPlayerGlue.PipCallback() {
+            @Override
+            public void onEnterPictureInPictur() {
+                getActivity().enterPictureInPictureMode();
+            }
+
+            @Override
+            public void onExitPictureInPictur() {
 
             }
         });
+
+        initMediaController();
+
         mMediaPlayerGlue.setTitle(movie.getTitle());
         mMediaPlayerGlue.setArtist(movie.getDescription());
-        String url = movie.getVideoUrl();
-        Log.d("wjj", "==========url=====" + url);
-        mMediaPlayerGlue.setVideoUrl(url);
-        MediaController mc = new MediaController(getActivity());
+        mMediaPlayerGlue.setVideoUrl(movie.getVideoUrl());
+        Log.d("wjj", "=========PlaybackActivity=====setVideoUrl===========");
 
-//        mc.setMediaPlayer(mMediaPlayerGlue);
+    }
+
+    private void initMediaController() {
+        mMediaSessionManager = (MediaSessionManager) getActivity().getSystemService(Context.MEDIA_SESSION_SERVICE);
+        try {
+            mMediaController = new MediaControllerCompat(getActivity(), mMediaPlayerGlue.getMediaSession().getSessionToken());
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+        if (mMediaController != null) {
+            mMediaController.registerCallback(new MediaControllerCompat.Callback() {
+                @Override
+                public void onSessionDestroyed() {
+                    super.onSessionDestroyed();
+                }
+
+                @Override
+                public void onPlaybackStateChanged(PlaybackStateCompat state) {
+                    super.onPlaybackStateChanged(state);
+                    Log.d("wjj", "=========PlaybackActivity=====onPlaybackStateChanged===========" + state);
+                }
+
+                @Override
+                public void onMetadataChanged(MediaMetadataCompat metadata) {
+                    super.onMetadataChanged(metadata);
+                }
+            });
+        }
+    }
+
+    public MediaControllerCompat getMediaController() {
+        return mMediaController;
     }
 
     @Override
@@ -94,14 +141,13 @@ public class PlaybackVideoFragment extends VideoSupportFragment
     }
 
 
-
     @Override
     public void onPictureInPictureModeChanged(boolean isInPictureInPictureMode) {
         super.onPictureInPictureModeChanged(isInPictureInPictureMode);
+        mMediaPlayerGlue.setInPictureInPictureMode(isInPictureInPictureMode);
+        if (isInPictureInPictureMode) {
+            mMediaController.getTransportControls().play();
+        }
     }
 
-    @Override
-    public void onItemSelected(Presenter.ViewHolder itemViewHolder, Object item, RowPresenter.ViewHolder rowViewHolder, Row row) {
-
-    }
 }
