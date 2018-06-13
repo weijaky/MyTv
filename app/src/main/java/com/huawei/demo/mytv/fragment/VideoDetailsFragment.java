@@ -44,6 +44,7 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.drawable.GlideDrawable;
 import com.bumptech.glide.request.animation.GlideAnimation;
 import com.bumptech.glide.request.target.SimpleTarget;
+import com.huawei.demo.mytv.data.Config;
 import com.huawei.demo.mytv.data.Movie;
 import com.huawei.demo.mytv.data.MovieList;
 import com.huawei.demo.mytv.R;
@@ -62,6 +63,7 @@ import java.util.List;
  */
 public class VideoDetailsFragment extends DetailsFragment {
     private static final String TAG = "VideoDetailsFragment";
+    private static final boolean DEBUG = Config.DEBUG;
 
     private static final int ACTION_WATCH_TRAILER = 1;
     private static final int ACTION_RENT = 2;
@@ -81,7 +83,7 @@ public class VideoDetailsFragment extends DetailsFragment {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        Log.d(TAG, "onCreate DetailsFragment");
+        if(DEBUG) Log.d(TAG, "onCreate DetailsFragment");
         super.onCreate(savedInstanceState);
 
         mDetailsBackground = new DetailsFragmentBackgroundController(this);
@@ -112,8 +114,7 @@ public class VideoDetailsFragment extends DetailsFragment {
                 .error(R.drawable.default_background)
                 .into(new SimpleTarget<Bitmap>() {
                     @Override
-                    public void onResourceReady(Bitmap bitmap,
-                                                GlideAnimation<? super Bitmap> glideAnimation) {
+                    public void onResourceReady(Bitmap bitmap, GlideAnimation<? super Bitmap> glideAnimation) {
                         mDetailsBackground.setCoverBitmap(bitmap);
                         mAdapter.notifyArrayItemRangeChanged(0, mAdapter.size());
                     }
@@ -121,7 +122,7 @@ public class VideoDetailsFragment extends DetailsFragment {
     }
 
     private void setupDetailsOverviewRow() {
-        Log.d(TAG, "doInBackground: " + mSelectedMovie.toString());
+        if(DEBUG) Log.d(TAG, "doInBackground: " + mSelectedMovie.toString());
         final DetailsOverviewRow row = new DetailsOverviewRow(mSelectedMovie);
         row.setImageDrawable(
                 ContextCompat.getDrawable(getContext(), R.drawable.default_background));
@@ -145,18 +146,15 @@ public class VideoDetailsFragment extends DetailsFragment {
         ArrayObjectAdapter actionAdapter = new ArrayObjectAdapter();
 
         actionAdapter.add(
-                new Action(
-                        ACTION_WATCH_TRAILER,
+                new Action(ACTION_WATCH_TRAILER,
                         getResources().getString(R.string.watch_trailer_1),
                         getResources().getString(R.string.watch_trailer_2)));
         actionAdapter.add(
-                new Action(
-                        ACTION_RENT,
+                new Action(ACTION_RENT,
                         getResources().getString(R.string.rent_1),
                         getResources().getString(R.string.rent_2)));
         actionAdapter.add(
-                new Action(
-                        ACTION_BUY,
+                new Action(ACTION_BUY,
                         getResources().getString(R.string.buy_1),
                         getResources().getString(R.string.buy_2)));
         row.setActionsAdapter(actionAdapter);
@@ -220,7 +218,7 @@ public class VideoDetailsFragment extends DetailsFragment {
                                   RowPresenter.ViewHolder rowViewHolder, Row row) {
 
             if (item instanceof Movie) {
-                Log.d(TAG, "Item: " + item.toString());
+                if(DEBUG) Log.d(TAG, "Item: " + item.toString());
                 Intent intent = new Intent(getActivity(), DetailsActivity.class);
                 intent.putExtra(getResources().getString(R.string.movie), mSelectedMovie);
 

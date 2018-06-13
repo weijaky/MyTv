@@ -21,11 +21,13 @@ import android.util.Log;
 import android.view.ViewGroup;
 
 import com.bumptech.glide.Glide;
+import com.huawei.demo.mytv.data.Config;
 import com.huawei.demo.mytv.data.Movie;
 import com.huawei.demo.mytv.R;
 
 public class CardPresenter extends Presenter {
     private static final String TAG = "CardPresenter";
+    private static final boolean DEBUG = Config.DEBUG;
 
     private static final int CARD_WIDTH = 313;
     private static final int CARD_HEIGHT = 176;
@@ -43,7 +45,7 @@ public class CardPresenter extends Presenter {
 
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent) {
-        Log.d(TAG, "onCreateViewHolder");
+        if(DEBUG) Log.d(TAG, "onCreateViewHolder");
 
         sDefaultBackgroundColor = parent.getResources().getColor(R.color.default_background);
         sSelectedBackgroundColor = parent.getResources().getColor(R.color.selected_background);
@@ -69,7 +71,7 @@ public class CardPresenter extends Presenter {
         Movie movie = (Movie) item;
         ImageCardView cardView = (ImageCardView) viewHolder.view;
 
-        Log.d(TAG, "onBindViewHolder");
+        if(DEBUG) Log.d(TAG, "onBindViewHolder");
         if (movie.getCardImageUrl() != null) {
             cardView.setTitleText(movie.getTitle());
             cardView.setContentText(movie.getStudio());
@@ -84,7 +86,7 @@ public class CardPresenter extends Presenter {
 
     @Override
     public void onUnbindViewHolder(Presenter.ViewHolder viewHolder) {
-        Log.d(TAG, "onUnbindViewHolder");
+        if(DEBUG) Log.d(TAG, "onUnbindViewHolder");
         ImageCardView cardView = (ImageCardView) viewHolder.view;
         cardView.setBadgeImage(null);
         cardView.setMainImage(null);

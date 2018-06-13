@@ -58,10 +58,10 @@ public final class MovieList {
         };
         String videoUrl[] = {
                 Config.MAIN_SERVER + Config.MOVIE_DIR + "/test1.mp4",
-                Config.MAIN_SERVER + Config.MOVIE_DIR + "test2.mp4",
-                Config.MAIN_SERVER + Config.MOVIE_DIR + "test3.mp4",
-                Config.MAIN_SERVER + Config.MOVIE_DIR + "test4.mp4",
-                Config.MAIN_SERVER + Config.MOVIE_DIR + "test5.mp4"
+                Config.MAIN_SERVER + Config.MOVIE_DIR + "/test2.mp4",
+                Config.MAIN_SERVER + Config.MOVIE_DIR + "/test3.mp4",
+                Config.MAIN_SERVER + Config.MOVIE_DIR + "/test4.mp4",
+                Config.MAIN_SERVER + Config.MOVIE_DIR + "/test5.mp4"
         };
         String bgImageUrl[] = {
                 Config.MAIN_SERVER + Config.MOVIE_DIR + Config.IMAGE_DIR + "/test1.png",

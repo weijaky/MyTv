@@ -49,6 +49,7 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.drawable.GlideDrawable;
 import com.bumptech.glide.request.animation.GlideAnimation;
 import com.bumptech.glide.request.target.SimpleTarget;
+import com.huawei.demo.mytv.data.Config;
 import com.huawei.demo.mytv.data.Movie;
 import com.huawei.demo.mytv.data.MovieList;
 import com.huawei.demo.mytv.R;
@@ -58,6 +59,7 @@ import com.huawei.demo.mytv.presenter.CardPresenter;
 
 public class MainFragment extends BrowseFragment {
     private static final String TAG = "MainFragment";
+    private static final boolean DEBUG = Config.DEBUG;
 
     private static final int BACKGROUND_UPDATE_DELAY = 300;
     private static final int GRID_ITEM_WIDTH = 200;
@@ -75,7 +77,7 @@ public class MainFragment extends BrowseFragment {
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
-        Log.i(TAG, "onCreate");
+        if(DEBUG) Log.i(TAG, "onCreate");
         super.onActivityCreated(savedInstanceState);
 
         prepareBackgroundManager();
@@ -91,7 +93,7 @@ public class MainFragment extends BrowseFragment {
     public void onDestroy() {
         super.onDestroy();
         if (null != mBackgroundTimer) {
-            Log.d(TAG, "onDestroy: " + mBackgroundTimer.toString());
+            if(DEBUG) Log.d(TAG, "onDestroy: " + mBackgroundTimer.toString());
             mBackgroundTimer.cancel();
         }
     }
@@ -155,7 +157,7 @@ public class MainFragment extends BrowseFragment {
 
             @Override
             public void onClick(View view) {
-                Toast.makeText(getActivity(), "进行您自己的应用内搜索", Toast.LENGTH_LONG)
+                Toast.makeText(getActivity(), "搜索", Toast.LENGTH_LONG)
                         .show();
             }
         });

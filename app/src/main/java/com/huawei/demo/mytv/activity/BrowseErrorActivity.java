@@ -38,9 +38,6 @@ public class BrowseErrorActivity extends Activity {
     private ErrorFragment mErrorFragment;
     private SpinnerFragment mSpinnerFragment;
 
-    /**
-     * Called when the activity is first created.
-     */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

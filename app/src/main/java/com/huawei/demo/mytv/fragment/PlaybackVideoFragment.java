@@ -19,26 +19,30 @@ import android.support.v17.leanback.app.VideoSupportFragment;
 import android.support.v17.leanback.app.VideoSupportFragmentGlueHost;
 import android.support.v17.leanback.media.MediaPlayerGlue;
 import android.support.v17.leanback.media.PlaybackGlue;
-import android.support.v17.leanback.widget.Action;
-import android.support.v17.leanback.widget.ArrayObjectAdapter;
-import android.support.v17.leanback.widget.ControlButtonPresenterSelector;
-import android.support.v17.leanback.widget.OnActionClickedListener;
+import android.support.v17.leanback.widget.OnItemViewSelectedListener;
 import android.support.v17.leanback.widget.PlaybackControlsRow;
+import android.support.v17.leanback.widget.Presenter;
+import android.support.v17.leanback.widget.Row;
+import android.support.v17.leanback.widget.RowPresenter;
+import android.util.Log;
+import android.widget.MediaController;
 
+import com.huawei.demo.mytv.MyMediaPlayerGlue;
+import com.huawei.demo.mytv.data.Config;
 import com.huawei.demo.mytv.data.Movie;
 import com.huawei.demo.mytv.activity.DetailsActivity;
 
 /**
  * Handles video playback with media controls.
  */
-public class PlaybackVideoFragment extends VideoSupportFragment implements OnActionClickedListener {
+public class PlaybackVideoFragment extends VideoSupportFragment
+        implements OnItemViewSelectedListener
+{
     private static final String TAG = "PlaybackVideoFragment";
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = Config.DEBUG;
 
-    private MediaPlayerGlue mMediaPlayerGlue;
-    private  PlaybackControlsRow.RepeatAction mRepeatAction;
-    protected  PlaybackControlsRow.PictureInPictureAction mPictureInPictureAction;
-    protected  PlaybackControlsRow.ClosedCaptioningAction mClosedCaptioningAction;
+    private MyMediaPlayerGlue mMediaPlayerGlue;
+    private PlaybackControlsRow.PlayPauseAction mPlayPauseAction;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -47,7 +51,7 @@ public class PlaybackVideoFragment extends VideoSupportFragment implements OnAct
         final Movie movie = (Movie) getActivity().getIntent().getSerializableExtra(DetailsActivity.MOVIE);
 
         VideoSupportFragmentGlueHost glueHost = new VideoSupportFragmentGlueHost(PlaybackVideoFragment.this);
-        mMediaPlayerGlue = new MediaPlayerGlue(getActivity());
+        mMediaPlayerGlue = new MyMediaPlayerGlue(getActivity());
         mMediaPlayerGlue.setHost(glueHost);
         mMediaPlayerGlue.setMode(MediaPlayerGlue.NO_REPEAT);
         mMediaPlayerGlue.setPlayerCallback(new PlaybackGlue.PlayerCallback() {
@@ -59,41 +63,45 @@ public class PlaybackVideoFragment extends VideoSupportFragment implements OnAct
         });
         mMediaPlayerGlue.setTitle(movie.getTitle());
         mMediaPlayerGlue.setArtist(movie.getDescription());
-        mMediaPlayerGlue.setVideoUrl(movie.getVideoUrl());
+        String url = movie.getVideoUrl();
+        Log.d("wjj", "==========url=====" + url);
+        mMediaPlayerGlue.setVideoUrl(url);
+        MediaController mc = new MediaController(getActivity());
 
-        initView();
-        glueHost.setOnActionClickedListener(this);
+//        mc.setMediaPlayer(mMediaPlayerGlue);
     }
 
-    private void initView() {
-        mRepeatAction = new PlaybackControlsRow.RepeatAction(getContext());
-        mClosedCaptioningAction = new PlaybackControlsRow.ClosedCaptioningAction(getContext());
-        mPictureInPictureAction = new PlaybackControlsRow.PictureInPictureAction(getContext());
-        mClosedCaptioningAction.setIndex(PlaybackControlsRow.ThumbsAction.INDEX_OUTLINE);
-
-        ArrayObjectAdapter secondaryActionsAdapter = new ArrayObjectAdapter(new ControlButtonPresenterSelector());
-        secondaryActionsAdapter.add(mRepeatAction);
-        secondaryActionsAdapter.add(mClosedCaptioningAction);
-        secondaryActionsAdapter.add(mPictureInPictureAction);
-        mMediaPlayerGlue.getControlsRow().setSecondaryActionsAdapter(secondaryActionsAdapter);
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (getActivity().isInPictureInPictureMode()) {
+            if (mMediaPlayerGlue != null) {
+                mMediaPlayerGlue.play();
+            }
+        }
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        if (mMediaPlayerGlue != null) {
-            mMediaPlayerGlue.pause();
+        if (getActivity().isInPictureInPictureMode()) {
+
+            if (mMediaPlayerGlue != null) {
+                mMediaPlayerGlue.pause();
+            }
         }
+
+    }
+
+
+
+    @Override
+    public void onPictureInPictureModeChanged(boolean isInPictureInPictureMode) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode);
     }
 
     @Override
-    public void onActionClicked(Action action) {
-        if (action instanceof PlaybackControlsRow.RepeatAction) {
-            ((PlaybackControlsRow.RepeatAction) action).nextIndex();
-        } else if (action == mPictureInPictureAction) {
-            getActivity().enterPictureInPictureMode();
-        } else if (action == mClosedCaptioningAction) {
+    public void onItemSelected(Presenter.ViewHolder itemViewHolder, Object item, RowPresenter.ViewHolder rowViewHolder, Row row) {
 
-        }
     }
 }

@@ -18,17 +18,19 @@ import android.util.Log;
 import android.view.View;
 
 import com.huawei.demo.mytv.R;
+import com.huawei.demo.mytv.data.Config;
 
 /*
  * This class demonstrates how to extend ErrorFragment
  */
 public class ErrorFragment extends android.support.v17.leanback.app.ErrorFragment {
     private static final String TAG = "ErrorFragment";
+    private static final boolean DEBUG = Config.DEBUG;
     private static final boolean TRANSLUCENT = true;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        Log.d(TAG, "onCreate");
+        if(DEBUG) Log.d(TAG, "onCreate");
         super.onCreate(savedInstanceState);
         setTitle(getResources().getString(R.string.app_name));
     }
