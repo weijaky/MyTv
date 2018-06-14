@@ -14,9 +14,8 @@
 
 package com.huawei.demo.mytv.activity;
 
-import android.content.res.Configuration;
+import android.content.Intent;
 import android.os.Bundle;
-import android.os.PersistableBundle;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 
@@ -32,26 +31,17 @@ public class PlaybackActivity extends FragmentActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        mPlaybackVideoFragment = new PlaybackVideoFragment();
         if (savedInstanceState == null) {
+            mPlaybackVideoFragment = new PlaybackVideoFragment();
             getSupportFragmentManager().beginTransaction()
-                    .replace(android.R.id.content, new PlaybackVideoFragment())
+                    .replace(android.R.id.content, mPlaybackVideoFragment)
                     .commit();
         }
     }
 
     @Override
-    protected void onStop() {
-        super.onStop();
-        Log.d("wjj","=========PlaybackActivity=====onStop============");
-    }
-
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        Log.d("wjj","=========PlaybackActivity=====onDestroy============");
-
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        mPlaybackVideoFragment.setVideo(intent);
     }
 }

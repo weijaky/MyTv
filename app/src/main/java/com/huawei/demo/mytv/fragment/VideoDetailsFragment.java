@@ -14,10 +14,12 @@
 
 package com.huawei.demo.mytv.fragment;
 
+import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.os.UserHandle;
 import android.support.v17.leanback.app.DetailsFragment;
 import android.support.v17.leanback.app.DetailsFragmentBackgroundController;
 import android.support.v17.leanback.widget.Action;
@@ -83,7 +85,7 @@ public class VideoDetailsFragment extends DetailsFragment {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        if(DEBUG) Log.d(TAG, "onCreate DetailsFragment");
+        if (DEBUG) Log.d(TAG, "onCreate DetailsFragment");
         super.onCreate(savedInstanceState);
 
         mDetailsBackground = new DetailsFragmentBackgroundController(this);
@@ -122,7 +124,7 @@ public class VideoDetailsFragment extends DetailsFragment {
     }
 
     private void setupDetailsOverviewRow() {
-        if(DEBUG) Log.d(TAG, "doInBackground: " + mSelectedMovie.toString());
+        if (DEBUG) Log.d(TAG, "doInBackground: " + mSelectedMovie.toString());
         final DetailsOverviewRow row = new DetailsOverviewRow(mSelectedMovie);
         row.setImageDrawable(
                 ContextCompat.getDrawable(getContext(), R.drawable.default_background));
@@ -218,7 +220,7 @@ public class VideoDetailsFragment extends DetailsFragment {
                                   RowPresenter.ViewHolder rowViewHolder, Row row) {
 
             if (item instanceof Movie) {
-                if(DEBUG) Log.d(TAG, "Item: " + item.toString());
+                if (DEBUG) Log.d(TAG, "Item: " + item.toString());
                 Intent intent = new Intent(getActivity(), DetailsActivity.class);
                 intent.putExtra(getResources().getString(R.string.movie), mSelectedMovie);
 

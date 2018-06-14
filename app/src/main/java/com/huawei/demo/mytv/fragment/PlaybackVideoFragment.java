@@ -15,6 +15,7 @@
 package com.huawei.demo.mytv.fragment;
 
 import android.content.Context;
+import android.content.Intent;
 import android.media.MediaMetadata;
 import android.media.session.MediaController;
 import android.media.session.MediaSessionManager;
@@ -44,16 +45,22 @@ public class PlaybackVideoFragment extends VideoSupportFragment {
 
     private TvMediaPlayerGlue mMediaPlayerGlue;
     private MediaControllerCompat mMediaController;
-    private MediaSessionManager mMediaSessionManager;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.d("wjj", "=========PlaybackActivity=====onCreate===========");
-        final Movie movie = (Movie) getActivity().getIntent().getSerializableExtra(DetailsActivity.MOVIE);
+//        final Movie movie = (Movie) getActivity().getIntent().getSerializableExtra(DetailsActivity.MOVIE);
 
         VideoSupportFragmentGlueHost glueHost = new VideoSupportFragmentGlueHost(PlaybackVideoFragment.this);
-        mMediaPlayerGlue = new TvMediaPlayerGlue(getActivity());
+        initMediaGlue(glueHost);
+
+    }
+
+    private void initMediaGlue(VideoSupportFragmentGlueHost glueHost) {
+        if (mMediaPlayerGlue == null) {
+            mMediaPlayerGlue = new TvMediaPlayerGlue(getActivity());
+        }
+
         mMediaPlayerGlue.setHost(glueHost);
         mMediaPlayerGlue.setMode(MediaPlayerGlue.NO_REPEAT);
         mMediaPlayerGlue.addPlayerCallback(new PlaybackGlue.PlayerCallback() {
@@ -79,15 +86,22 @@ public class PlaybackVideoFragment extends VideoSupportFragment {
 
         initMediaController();
 
+        setVideo(getActivity().getIntent());
+
+    }
+
+    public void setVideo(Intent intent) {
+        if (intent == null) {
+            return;
+        }
+        final Movie movie = (Movie) intent.getSerializableExtra(DetailsActivity.MOVIE);
         mMediaPlayerGlue.setTitle(movie.getTitle());
         mMediaPlayerGlue.setArtist(movie.getDescription());
         mMediaPlayerGlue.setVideoUrl(movie.getVideoUrl());
         Log.d("wjj", "=========PlaybackActivity=====setVideoUrl===========");
-
     }
 
     private void initMediaController() {
-        mMediaSessionManager = (MediaSessionManager) getActivity().getSystemService(Context.MEDIA_SESSION_SERVICE);
         try {
             mMediaController = new MediaControllerCompat(getActivity(), mMediaPlayerGlue.getMediaSession().getSessionToken());
         } catch (RemoteException e) {
@@ -103,7 +117,6 @@ public class PlaybackVideoFragment extends VideoSupportFragment {
                 @Override
                 public void onPlaybackStateChanged(PlaybackStateCompat state) {
                     super.onPlaybackStateChanged(state);
-                    Log.d("wjj", "=========PlaybackActivity=====onPlaybackStateChanged===========" + state);
                 }
 
                 @Override

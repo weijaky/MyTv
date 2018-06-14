@@ -92,7 +92,6 @@ public class TvMediaPlayerGlue extends PlaybackControlGlue implements
     private PlaybackStateCompat mPlaybackStateCompat;
 
     private boolean isInPictureInPictureMode;
-    private MediaSession.Token mediaSession;
 
     /**
      * Sets the drawable representing cover image.
@@ -154,13 +153,17 @@ public class TvMediaPlayerGlue extends PlaybackControlGlue implements
     }
 
     private void initMediaSession(Context context) {
+        if(mMediaSession != null){
+            return;
+        }
+        Log.d("wjj","=========initMediaSession==================");
         mPlaybackStateCompat = new PlaybackStateCompat.Builder()
                 .setActions(MEDIA_SESSION_ACTIONS)
                 .setState(PlaybackStateCompat.STATE_NONE, 0, 1.0f).build();
+
         mMediaSession = new MediaSessionCompat(context, TvMediaPlayerGlue.class.getPackage().getName());
         mMediaSession.setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS |
-                MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS
-        );
+                MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
         mMediaSession.getSessionToken();
         mMediaSession.setCallback(sessionCallback);
         mMediaSession.setPlaybackState(mPlaybackStateCompat);
