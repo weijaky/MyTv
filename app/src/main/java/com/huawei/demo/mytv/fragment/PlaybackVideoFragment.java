@@ -14,22 +14,37 @@
 
 package com.huawei.demo.mytv.fragment;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.os.RemoteException;
+import android.support.annotation.NonNull;
 import android.support.v17.leanback.app.VideoSupportFragment;
 import android.support.v17.leanback.app.VideoSupportFragmentGlueHost;
 import android.support.v17.leanback.media.MediaPlayerGlue;
 import android.support.v17.leanback.media.PlaybackGlue;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
+import android.text.Html;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.huawei.demo.mytv.data.LocalDataManager;
 import com.huawei.demo.mytv.manager.TvMediaPlayerManager;
 import com.huawei.demo.mytv.activity.DetailsActivity;
 import com.huawei.demo.mytv.data.Movie;
+
+import org.apache.commons.lang3.StringUtils;
+
+import java.net.URI;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Handles video playback with media controls.
@@ -40,6 +55,9 @@ public class PlaybackVideoFragment extends VideoSupportFragment {
 
     private TvMediaPlayerManager mMediaPlayerGlue;
     private MediaControllerCompat mMediaController;
+    private Pattern mMediaPattern;
+    public static final String MEDIA_PATTERN = "(http[s]?://)+([\\w-]+\\.)+[\\w-]+([\\w-./?%&=]*)?";
+    private Uri uri;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -66,7 +84,7 @@ public class PlaybackVideoFragment extends VideoSupportFragment {
                 int vWidth = manager.getVideoWidth();
                 int vHeight = manager.getVideoHeight();
 
-                Log.d("wjj","============vWidth===="+vWidth+"==vHeight=="+vHeight);
+                Log.d("wjj", "============vWidth====" + vWidth + "==vHeight==" + vHeight);
                 mMediaPlayerGlue.play();
             }
         });
@@ -93,10 +111,31 @@ public class PlaybackVideoFragment extends VideoSupportFragment {
         if (intent == null) {
             return;
         }
-        final Movie movie = (Movie) intent.getSerializableExtra(DetailsActivity.MOVIE);
-        mMediaPlayerGlue.setTitle(movie.getTitle());
-        mMediaPlayerGlue.setArtist(movie.getDescription());
-        mMediaPlayerGlue.setVideoUrl(movie.getVideoUrl());
+        uri = getIntentUri(intent);
+
+        Log.d("wjj", "==============" + uri.getPath());
+        if (uri != null) {
+            checkSelfPermission();
+        } else {
+            final Movie movie = (Movie) intent.getSerializableExtra(DetailsActivity.MOVIE);
+            mMediaPlayerGlue.setTitle(movie.getTitle());
+            mMediaPlayerGlue.setArtist(movie.getDescription());
+            mMediaPlayerGlue.setVideoUrl(movie.getVideoUrl());
+        }
+
+    }
+
+    private void checkSelfPermission() {
+        if (ContextCompat.checkSelfPermission(getActivity(),
+                Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            ActivityCompat.requestPermissions(getActivity(),
+                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    0);
+        } else {
+            mMediaPlayerGlue.setVideoUrl(uri.getPath());
+        }
     }
 
     private void initMediaController() {
@@ -150,6 +189,50 @@ public class PlaybackVideoFragment extends VideoSupportFragment {
         }
     }
 
+    public Uri getIntentUri(Intent intent) {
+        Uri result = null;
+        if (intent != null) {
+            result = intent.getData();
+            if (result == null) {
+                final String type = intent.getType();
+                String sharedUrl = intent.getStringExtra(Intent.EXTRA_TEXT);
+                if (!StringUtils.isEmpty(sharedUrl)) {
+                    if ("text/plain".equals(type) && sharedUrl != null) {
+                        result = getTextUri(sharedUrl);
+                    } else if ("text/html".equals(type) && sharedUrl != null) {
+                        result = getTextUri(Html.fromHtml(sharedUrl).toString());
+                    }
+                } else {
+                    Parcelable parce = intent.getParcelableExtra(Intent.EXTRA_STREAM);
+                    if (parce != null)
+                        result = (Uri) parce;
+                }
+            }
+        }
+        return result;
+    }
 
+    private Uri getTextUri(String sharedUrl) {
+        mMediaPattern = Pattern.compile(MEDIA_PATTERN);
+        Matcher matcher = mMediaPattern.matcher(sharedUrl);
+        if (matcher.find()) {
+            sharedUrl = matcher.group();
+            if (!StringUtils.isEmpty(sharedUrl)) {
+                return Uri.parse(sharedUrl);
+            }
+        }
+        return null;
+    }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode == 0) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                mMediaPlayerGlue.setVideoUrl(uri.getPath());
+            } else {
+                Toast.makeText(getActivity(), "Permission Denied", Toast.LENGTH_SHORT).show();
+            }
+        }
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
 }
