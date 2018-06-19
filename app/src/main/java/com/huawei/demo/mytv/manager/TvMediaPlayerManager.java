@@ -1,11 +1,10 @@
 
-package com.huawei.demo.mytv;
+package com.huawei.demo.mytv.manager;
 
 import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
-import android.media.session.MediaSession;
 import android.media.session.PlaybackState;
 import android.net.Uri;
 import android.os.Bundle;
@@ -33,22 +32,7 @@ import android.view.View;
 import java.io.IOException;
 import java.util.List;
 
-/**
- * This glue extends the {@link android.support.v17.leanback.media.PlaybackControlGlue} with a
- * {@link MediaPlayer} synchronization. It supports 7 actions:
- * <p>
- * <ul>
- * <li>{@link android.support.v17.leanback.widget.PlaybackControlsRow.FastForwardAction}</li>
- * <li>{@link android.support.v17.leanback.widget.PlaybackControlsRow.RewindAction}</li>
- * <li>{@link  android.support.v17.leanback.widget.PlaybackControlsRow.PlayPauseAction}</li>
- * <li>{@link android.support.v17.leanback.widget.PlaybackControlsRow.RepeatAction}</li>
- * <li>{@link android.support.v17.leanback.widget.PlaybackControlsRow.ThumbsDownAction}</li>
- * <li>{@link android.support.v17.leanback.widget.PlaybackControlsRow.ThumbsUpAction}</li>
- * </ul>
- *
- * @hide
- */
-public class TvMediaPlayerGlue extends PlaybackControlGlue implements
+public class TvMediaPlayerManager extends PlaybackControlGlue implements
         OnItemViewSelectedListener {
 
     public static final int NO_REPEAT = 0;
@@ -68,7 +52,7 @@ public class TvMediaPlayerGlue extends PlaybackControlGlue implements
 
     public static final int FAST_FORWARD_REWIND_STEP = 10 * 1000; // in milliseconds
     public static final int FAST_FORWARD_REWIND_REPEAT_DELAY = 200; // in milliseconds
-    private static final String TAG = "MediaPlayerGlue";
+    private static final String TAG = TvMediaPlayerManager.class.getSimpleName();
     protected final PlaybackControlsRow.ThumbsDownAction mThumbsDownAction;
     protected final PlaybackControlsRow.ThumbsUpAction mThumbsUpAction;
     protected final PlaybackControlsRow.PictureInPictureAction mPictureInPictureAction;
@@ -125,14 +109,14 @@ public class TvMediaPlayerGlue extends PlaybackControlGlue implements
     /**
      * Constructor.
      */
-    public TvMediaPlayerGlue(Context context) {
+    public TvMediaPlayerManager(Context context) {
         this(context, new int[]{1}, new int[]{1});
     }
 
     /**
      * Constructor.
      */
-    public TvMediaPlayerGlue(
+    public TvMediaPlayerManager(
             Context context, int[] fastForwardSpeeds, int[] rewindSpeeds) {
         super(context, fastForwardSpeeds, rewindSpeeds);
 
@@ -153,15 +137,15 @@ public class TvMediaPlayerGlue extends PlaybackControlGlue implements
     }
 
     private void initMediaSession(Context context) {
-        if(mMediaSession != null){
+        if (mMediaSession != null) {
             return;
         }
-        Log.d("wjj","=========initMediaSession==================");
+        Log.d("wjj", "=========initMediaSession==================");
         mPlaybackStateCompat = new PlaybackStateCompat.Builder()
                 .setActions(MEDIA_SESSION_ACTIONS)
                 .setState(PlaybackStateCompat.STATE_NONE, 0, 1.0f).build();
 
-        mMediaSession = new MediaSessionCompat(context, TvMediaPlayerGlue.class.getPackage().getName());
+        mMediaSession = new MediaSessionCompat(context, TvMediaPlayerManager.class.getPackage().getName());
         mMediaSession.setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS |
                 MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
         mMediaSession.getSessionToken();
@@ -176,7 +160,7 @@ public class TvMediaPlayerGlue extends PlaybackControlGlue implements
         super.onAttachedToHost(host);
         if (host instanceof SurfaceHolderGlueHost) {
             ((SurfaceHolderGlueHost) host).setSurfaceHolderCallback(
-                    new TvMediaPlayerGlue.VideoPlayerSurfaceHolderCallback());
+                    new TvMediaPlayerManager.VideoPlayerSurfaceHolderCallback());
         }
     }
 
@@ -198,7 +182,7 @@ public class TvMediaPlayerGlue extends PlaybackControlGlue implements
             List<PlayerCallback> callbacks = getPlayerCallbacks();
             if (callbacks != null) {
                 for (PlayerCallback callback : callbacks) {
-                    callback.onPreparedStateChanged(TvMediaPlayerGlue.this);
+                    callback.onPreparedStateChanged(TvMediaPlayerManager.this);
                 }
             }
         }
@@ -508,7 +492,7 @@ public class TvMediaPlayerGlue extends PlaybackControlGlue implements
                 List<PlayerCallback> callbacks = getPlayerCallbacks();
                 if (callbacks != null) {
                     for (PlayerCallback callback : callbacks) {
-                        callback.onPreparedStateChanged(TvMediaPlayerGlue.this);
+                        callback.onPreparedStateChanged(TvMediaPlayerManager.this);
                     }
                 }
             }
@@ -667,6 +651,14 @@ public class TvMediaPlayerGlue extends PlaybackControlGlue implements
         if (getControlsRow() != null) {
             getControlsRow().setCurrentTime(position);
         }
+    }
+
+    public int getVideoWidth() {
+        return mPlayer.getVideoWidth();
+    }
+
+    public int getVideoHeight() {
+        return mPlayer.getVideoHeight();
     }
 }
 

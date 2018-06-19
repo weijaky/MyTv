@@ -49,7 +49,7 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.drawable.GlideDrawable;
 import com.bumptech.glide.request.animation.GlideAnimation;
 import com.bumptech.glide.request.target.SimpleTarget;
-import com.huawei.demo.mytv.data.Config;
+import com.huawei.demo.mytv.data.LocalDataManager;
 import com.huawei.demo.mytv.data.Movie;
 import com.huawei.demo.mytv.data.MovieList;
 import com.huawei.demo.mytv.R;
@@ -57,9 +57,17 @@ import com.huawei.demo.mytv.activity.BrowseErrorActivity;
 import com.huawei.demo.mytv.activity.DetailsActivity;
 import com.huawei.demo.mytv.presenter.CardPresenter;
 
+import io.reactivex.Observable;
+import io.reactivex.ObservableEmitter;
+import io.reactivex.ObservableOnSubscribe;
+import io.reactivex.Observer;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
+
 public class MainFragment extends BrowseFragment {
     private static final String TAG = "MainFragment";
-    private static final boolean DEBUG = Config.DEBUG;
+    private static final boolean DEBUG = LocalDataManager.getConfig().isDebug();
 
     private static final int BACKGROUND_UPDATE_DELAY = 300;
     private static final int GRID_ITEM_WIDTH = 200;
@@ -77,7 +85,7 @@ public class MainFragment extends BrowseFragment {
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
-        if(DEBUG) Log.i(TAG, "onCreate");
+        if (DEBUG) Log.i(TAG, "onCreate");
         super.onActivityCreated(savedInstanceState);
 
         prepareBackgroundManager();
@@ -93,40 +101,60 @@ public class MainFragment extends BrowseFragment {
     public void onDestroy() {
         super.onDestroy();
         if (null != mBackgroundTimer) {
-            if(DEBUG) Log.d(TAG, "onDestroy: " + mBackgroundTimer.toString());
+            if (DEBUG) Log.d(TAG, "onDestroy: " + mBackgroundTimer.toString());
             mBackgroundTimer.cancel();
         }
     }
 
     private void loadRows() {
-        List<Movie> list = MovieList.setupMovies();
+        getObservable().subscribe(new Observer<List<Movie>>() {
+            @Override
+            public void onSubscribe(Disposable d) {
 
-        mRowsAdapter = new ArrayObjectAdapter(new ListRowPresenter());
-        CardPresenter cardPresenter = new CardPresenter();
-
-        int i;
-        for (i = 0; i < NUM_ROWS; i++) {
-            if (i != 0) {
-                Collections.shuffle(list);
             }
-            ArrayObjectAdapter listRowAdapter = new ArrayObjectAdapter(cardPresenter);
-            for (int j = 0; j < NUM_COLS; j++) {
-                listRowAdapter.add(list.get(j % 5));
+
+            @Override
+            public void onNext(List<Movie> movies) {
+                mRowsAdapter = new ArrayObjectAdapter(new ListRowPresenter());
+                CardPresenter cardPresenter = new CardPresenter();
+
+                int i;
+                for (i = 0; i < NUM_ROWS; i++) {
+                    if (i != 0) {
+                        Collections.shuffle(movies);
+                    }
+                    ArrayObjectAdapter listRowAdapter = new ArrayObjectAdapter(cardPresenter);
+                    for (int j = 0; j < NUM_COLS; j++) {
+                        listRowAdapter.add(movies.get(j % 5));
+                    }
+                    HeaderItem header = new HeaderItem(i, LocalDataManager.getConfig().getMovieCategory().get(i));
+                    mRowsAdapter.add(new ListRow(header, listRowAdapter));
+                }
+
+                HeaderItem gridHeader = new HeaderItem(i, "优先");
+
+                GridItemPresenter mGridPresenter = new GridItemPresenter();
+                ArrayObjectAdapter gridRowAdapter = new ArrayObjectAdapter(mGridPresenter);
+                gridRowAdapter.add(getResources().getString(R.string.grid_view));
+                gridRowAdapter.add(getString(R.string.error_fragment));
+                gridRowAdapter.add(getResources().getString(R.string.personal_settings));
+                mRowsAdapter.add(new ListRow(gridHeader, gridRowAdapter));
+
+                setAdapter(mRowsAdapter);
             }
-            HeaderItem header = new HeaderItem(i, MovieList.MOVIE_CATEGORY[i]);
-            mRowsAdapter.add(new ListRow(header, listRowAdapter));
-        }
 
-        HeaderItem gridHeader = new HeaderItem(i, "优先");
+            @Override
+            public void onError(Throwable e) {
 
-        GridItemPresenter mGridPresenter = new GridItemPresenter();
-        ArrayObjectAdapter gridRowAdapter = new ArrayObjectAdapter(mGridPresenter);
-        gridRowAdapter.add(getResources().getString(R.string.grid_view));
-        gridRowAdapter.add(getString(R.string.error_fragment));
-        gridRowAdapter.add(getResources().getString(R.string.personal_settings));
-        mRowsAdapter.add(new ListRow(gridHeader, gridRowAdapter));
+            }
 
-        setAdapter(mRowsAdapter);
+            @Override
+            public void onComplete() {
+
+            }
+        });
+
+
     }
 
     private void prepareBackgroundManager() {
@@ -190,6 +218,19 @@ public class MainFragment extends BrowseFragment {
         }
         mBackgroundTimer = new Timer();
         mBackgroundTimer.schedule(new UpdateBackgroundTask(), BACKGROUND_UPDATE_DELAY);
+    }
+
+    public Observable getObservable() {
+        return Observable.create(new ObservableOnSubscribe() {
+            @Override
+            public void subscribe(ObservableEmitter e) throws Exception {
+                List<Movie> list = MovieList.init().getList();
+                e.onNext(list);
+                e.onComplete();
+            }
+        })
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread());
     }
 
     private final class ItemViewClickedListener implements OnItemViewClickedListener {

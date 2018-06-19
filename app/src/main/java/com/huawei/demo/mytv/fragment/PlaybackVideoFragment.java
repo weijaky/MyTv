@@ -14,12 +14,7 @@
 
 package com.huawei.demo.mytv.fragment;
 
-import android.content.Context;
 import android.content.Intent;
-import android.media.MediaMetadata;
-import android.media.session.MediaController;
-import android.media.session.MediaSessionManager;
-import android.media.session.PlaybackState;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.support.v17.leanback.app.VideoSupportFragment;
@@ -31,9 +26,9 @@ import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
 
-import com.huawei.demo.mytv.TvMediaPlayerGlue;
+import com.huawei.demo.mytv.data.LocalDataManager;
+import com.huawei.demo.mytv.manager.TvMediaPlayerManager;
 import com.huawei.demo.mytv.activity.DetailsActivity;
-import com.huawei.demo.mytv.data.Config;
 import com.huawei.demo.mytv.data.Movie;
 
 /**
@@ -41,15 +36,14 @@ import com.huawei.demo.mytv.data.Movie;
  */
 public class PlaybackVideoFragment extends VideoSupportFragment {
     private static final String TAG = "PlaybackVideoFragment";
-    private static final boolean DEBUG = Config.DEBUG;
+    private static final boolean DEBUG = LocalDataManager.getConfig().isDebug();
 
-    private TvMediaPlayerGlue mMediaPlayerGlue;
+    private TvMediaPlayerManager mMediaPlayerGlue;
     private MediaControllerCompat mMediaController;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-//        final Movie movie = (Movie) getActivity().getIntent().getSerializableExtra(DetailsActivity.MOVIE);
 
         VideoSupportFragmentGlueHost glueHost = new VideoSupportFragmentGlueHost(PlaybackVideoFragment.this);
         initMediaGlue(glueHost);
@@ -58,7 +52,7 @@ public class PlaybackVideoFragment extends VideoSupportFragment {
 
     private void initMediaGlue(VideoSupportFragmentGlueHost glueHost) {
         if (mMediaPlayerGlue == null) {
-            mMediaPlayerGlue = new TvMediaPlayerGlue(getActivity());
+            mMediaPlayerGlue = new TvMediaPlayerManager(getActivity());
         }
 
         mMediaPlayerGlue.setHost(glueHost);
@@ -68,11 +62,16 @@ public class PlaybackVideoFragment extends VideoSupportFragment {
             @Override
             public void onPreparedStateChanged(PlaybackGlue glue) {
                 super.onPreparedStateChanged(glue);
+                TvMediaPlayerManager manager = (TvMediaPlayerManager) glue;
+                int vWidth = manager.getVideoWidth();
+                int vHeight = manager.getVideoHeight();
+
+                Log.d("wjj","============vWidth===="+vWidth+"==vHeight=="+vHeight);
                 mMediaPlayerGlue.play();
             }
         });
 
-        mMediaPlayerGlue.setPipCallback(new TvMediaPlayerGlue.PipCallback() {
+        mMediaPlayerGlue.setPipCallback(new TvMediaPlayerManager.PipCallback() {
             @Override
             public void onEnterPictureInPictur() {
                 getActivity().enterPictureInPictureMode();
@@ -98,7 +97,6 @@ public class PlaybackVideoFragment extends VideoSupportFragment {
         mMediaPlayerGlue.setTitle(movie.getTitle());
         mMediaPlayerGlue.setArtist(movie.getDescription());
         mMediaPlayerGlue.setVideoUrl(movie.getVideoUrl());
-        Log.d("wjj", "=========PlaybackActivity=====setVideoUrl===========");
     }
 
     private void initMediaController() {
@@ -134,22 +132,11 @@ public class PlaybackVideoFragment extends VideoSupportFragment {
     @Override
     public void onResume() {
         super.onResume();
-        if (getActivity().isInPictureInPictureMode()) {
-            if (mMediaPlayerGlue != null) {
-                mMediaPlayerGlue.play();
-            }
-        }
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        if (getActivity().isInPictureInPictureMode()) {
-
-            if (mMediaPlayerGlue != null) {
-                mMediaPlayerGlue.pause();
-            }
-        }
 
     }
 
@@ -159,7 +146,7 @@ public class PlaybackVideoFragment extends VideoSupportFragment {
         super.onPictureInPictureModeChanged(isInPictureInPictureMode);
         mMediaPlayerGlue.setInPictureInPictureMode(isInPictureInPictureMode);
         if (isInPictureInPictureMode) {
-            mMediaController.getTransportControls().play();
+
         }
     }
 

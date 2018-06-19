@@ -14,12 +14,10 @@
 
 package com.huawei.demo.mytv.fragment;
 
-import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
-import android.os.UserHandle;
 import android.support.v17.leanback.app.DetailsFragment;
 import android.support.v17.leanback.app.DetailsFragmentBackgroundController;
 import android.support.v17.leanback.widget.Action;
@@ -46,7 +44,7 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.drawable.GlideDrawable;
 import com.bumptech.glide.request.animation.GlideAnimation;
 import com.bumptech.glide.request.target.SimpleTarget;
-import com.huawei.demo.mytv.data.Config;
+import com.huawei.demo.mytv.data.LocalDataManager;
 import com.huawei.demo.mytv.data.Movie;
 import com.huawei.demo.mytv.data.MovieList;
 import com.huawei.demo.mytv.R;
@@ -65,7 +63,7 @@ import java.util.List;
  */
 public class VideoDetailsFragment extends DetailsFragment {
     private static final String TAG = "VideoDetailsFragment";
-    private static final boolean DEBUG = Config.DEBUG;
+    private static final boolean DEBUG = LocalDataManager.getConfig().isDebug();
 
     private static final int ACTION_WATCH_TRAILER = 1;
     private static final int ACTION_RENT = 2;
@@ -147,35 +145,21 @@ public class VideoDetailsFragment extends DetailsFragment {
 
         ArrayObjectAdapter actionAdapter = new ArrayObjectAdapter();
 
-        actionAdapter.add(
-                new Action(ACTION_WATCH_TRAILER,
-                        getResources().getString(R.string.watch_trailer_1),
-                        getResources().getString(R.string.watch_trailer_2)));
-        actionAdapter.add(
-                new Action(ACTION_RENT,
-                        getResources().getString(R.string.rent_1),
-                        getResources().getString(R.string.rent_2)));
-        actionAdapter.add(
-                new Action(ACTION_BUY,
-                        getResources().getString(R.string.buy_1),
-                        getResources().getString(R.string.buy_2)));
+        actionAdapter.add(new Action(ACTION_WATCH_TRAILER, getResources().getString(R.string.watch_trailer_1), getResources().getString(R.string.watch_trailer_2)));
+        actionAdapter.add(new Action(ACTION_RENT, getResources().getString(R.string.rent_1), getResources().getString(R.string.rent_2)));
+        actionAdapter.add(new Action(ACTION_BUY, getResources().getString(R.string.buy_1), getResources().getString(R.string.buy_2)));
         row.setActionsAdapter(actionAdapter);
-
         mAdapter.add(row);
     }
 
     private void setupDetailsOverviewRowPresenter() {
         // Set detail background.
-        FullWidthDetailsOverviewRowPresenter detailsPresenter =
-                new FullWidthDetailsOverviewRowPresenter(new DetailsDescriptionPresenter());
-        detailsPresenter.setBackgroundColor(
-                ContextCompat.getColor(getContext(), R.color.selected_background));
+        FullWidthDetailsOverviewRowPresenter detailsPresenter = new FullWidthDetailsOverviewRowPresenter(new DetailsDescriptionPresenter());
+        detailsPresenter.setBackgroundColor(ContextCompat.getColor(getContext(), R.color.selected_background));
 
         // Hook up transition element.
-        FullWidthDetailsOverviewSharedElementHelper sharedElementHelper =
-                new FullWidthDetailsOverviewSharedElementHelper();
-        sharedElementHelper.setSharedElementEnterTransition(
-                getActivity(), DetailsActivity.SHARED_ELEMENT_NAME);
+        FullWidthDetailsOverviewSharedElementHelper sharedElementHelper = new FullWidthDetailsOverviewSharedElementHelper();
+        sharedElementHelper.setSharedElementEnterTransition(getActivity(), DetailsActivity.SHARED_ELEMENT_NAME);
         detailsPresenter.setListener(sharedElementHelper);
         detailsPresenter.setParticipatingEntranceTransition(true);
 
@@ -196,7 +180,7 @@ public class VideoDetailsFragment extends DetailsFragment {
 
     private void setupRelatedMovieListRow() {
         String subcategories[] = {getString(R.string.related_movies)};
-        List<Movie> list = MovieList.getList();
+        List<Movie> list = MovieList.init().getList();
 
         Collections.shuffle(list);
         ArrayObjectAdapter listRowAdapter = new ArrayObjectAdapter(new CardPresenter());

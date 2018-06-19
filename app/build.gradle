@@ -22,4 +22,7 @@ dependencies {
     implementation 'com.android.support:leanback-v17:26.1.0'
     implementation 'com.android.support:appcompat-v7:26.1.0'
     implementation 'com.github.bumptech.glide:glide:3.8.0'
+    implementation "com.alibaba:fastjson:$rootProject.fastjsonVersion"
+    compile 'io.reactivex.rxjava2:rxandroid:2.0.1'
+    compile 'io.reactivex.rxjava2:rxjava:2.1.7'
 }

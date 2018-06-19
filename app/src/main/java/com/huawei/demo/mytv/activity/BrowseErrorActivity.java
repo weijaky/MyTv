@@ -65,12 +65,10 @@ public class BrowseErrorActivity extends Activity {
 
     static public class SpinnerFragment extends Fragment {
         @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                                 Bundle savedInstanceState) {
+        public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
             ProgressBar progressBar = new ProgressBar(container.getContext());
             if (container instanceof FrameLayout) {
-                FrameLayout.LayoutParams layoutParams =
-                        new FrameLayout.LayoutParams(SPINNER_WIDTH, SPINNER_HEIGHT, Gravity.CENTER);
+                FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(SPINNER_WIDTH, SPINNER_HEIGHT, Gravity.CENTER);
                 progressBar.setLayoutParams(layoutParams);
             }
             return progressBar;

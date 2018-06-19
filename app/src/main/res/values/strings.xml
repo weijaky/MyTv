@@ -20,4 +20,8 @@
     <string name="video_error_unknown_error">加载视频失败！</string>
     <string name="error_fragment_message">一个错误产生</string>
     <string name="dismiss_error">关闭</string>
+
+    <string name="hour_symbol">h</string>
+    <string name="minute_symbol">m</string>
+    <string name="second_symbol">s</string>
 </resources>

@@ -21,13 +21,13 @@ import android.util.Log;
 import android.view.ViewGroup;
 
 import com.bumptech.glide.Glide;
-import com.huawei.demo.mytv.data.Config;
+import com.huawei.demo.mytv.data.LocalDataManager;
 import com.huawei.demo.mytv.data.Movie;
 import com.huawei.demo.mytv.R;
 
 public class CardPresenter extends Presenter {
     private static final String TAG = "CardPresenter";
-    private static final boolean DEBUG = Config.DEBUG;
+    private static final boolean DEBUG = LocalDataManager.getConfig().isDebug();
 
     private static final int CARD_WIDTH = 313;
     private static final int CARD_HEIGHT = 176;

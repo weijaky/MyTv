@@ -25,3 +25,38 @@ allprojects {
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
+
+ext {
+    // Sdk and tools
+    minSdkVersion = 24
+    targetSdkVersion = 26
+    compileSdkVersion = 26
+    buildToolsVersion = '26.0.2'
+
+    // App dependencies
+    dbflowVersion = '3.0.1'
+    eventbusVersion = '3.0.0'
+    fastjsonVersion = '1.1.34.android'
+    retrofitVersion = '2.1.0'
+    convertergsonVersion = '2.0.2'
+    supportLibraryVersion = '26.4.0'
+    glideVersion = '3.7.0'
+    supportLibraryv4Version = '26.4.0'
+    compatibleSupportLibraryVersion = '26.4.0' // for projects which can't be built with sdk 24+
+    zxingCoreVersion = '3.2.1'
+    zxingAndroidCoreVersion = '3.2.0'
+    fileDownloadVersion = '1.4.0'
+    onyxBaseSDKVersion = '1.3.0'
+    butterknifeVersion = '7.0.1'
+    okHttp3Version = '3.6.0'
+    okioVersion = '1.11.0'
+    onyxSDKDataVersion = '1.0.1'
+    converterscalarsVersion = '2.0.0'
+    onyxSdkReaderVersion = '1.2.5'
+    alreaderEngineVersion = '1.0.2'
+    chineseAnalyzeVersion = '1.0.0'
+    frescoVersion = '1.2.0'
+    disklrucacheVersion = '2.0.2'
+    MPAndroidChartVersion = 'v3.0.2'
+    rxjavaVersion = '2.0.1'
+}
