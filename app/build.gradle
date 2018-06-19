@@ -8,6 +8,7 @@ android {
         targetSdkVersion 26
         versionCode 1
         versionName "1.0"
+        flavorDimensions "minSdkVersion"
     }
     buildTypes {
         release {
@@ -15,6 +16,26 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
+    productFlavors {
+
+        tv {
+            manifestPlaceholders = [
+                    category: "android.intent.category.LEANBACK_LAUNCHER"
+            ]
+        }
+        phone {
+            manifestPlaceholders = [
+                    category: "android.intent.category.LAUNCHER"
+            ]
+        }
+    }
+
+    lintOptions {
+        abortOnError false
+    }
+
+
 }
 
 dependencies {
