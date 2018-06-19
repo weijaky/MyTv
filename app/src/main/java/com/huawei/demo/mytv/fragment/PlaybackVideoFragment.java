@@ -130,16 +130,16 @@ public class PlaybackVideoFragment extends VideoSupportFragment {
     }
 
     @Override
-    public void onResume() {
-        super.onResume();
+    public void onStart() {
+        super.onStart();
+        mMediaPlayerGlue.play();
     }
 
     @Override
-    public void onPause() {
-        super.onPause();
-
+    public void onStop() {
+        super.onStop();
+        mMediaPlayerGlue.pause();
     }
-
 
     @Override
     public void onPictureInPictureModeChanged(boolean isInPictureInPictureMode) {
@@ -149,5 +149,7 @@ public class PlaybackVideoFragment extends VideoSupportFragment {
 
         }
     }
+
+
 
 }

@@ -36,7 +36,8 @@
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".activity.DetailsActivity" />
+        <activity android:name=".activity.DetailsActivity"
+            android:screenOrientation="landscape"/>
         <activity
             android:name=".activity.PlaybackActivity"
             android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation"
@@ -44,6 +45,7 @@
             android:launchMode="singleInstance"
             android:resizeableActivity="true"
             android:supportsPictureInPicture="true"
+            android:screenOrientation="landscape"
             android:taskAffinity="" />
         <activity android:name=".activity.BrowseErrorActivity" />
     </application>
