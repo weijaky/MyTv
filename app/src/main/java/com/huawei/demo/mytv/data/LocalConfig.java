@@ -19,7 +19,7 @@ public class LocalConfig {
 
     private static LocalConfig config;
     private List<String> serverUrl;
-    private static String server = "http://www.weijaky.top";
+    private static String server;
     private List<String> movieCategory;
     private String movieDir;
     private String imageDir;
@@ -53,20 +53,20 @@ public class LocalConfig {
 
         List<String> servers = getServerUrl();
 
-        if (servers != null && servers.size() > 0) {
+        if ((server == null || server.isEmpty()) && servers != null && servers.size() > 0) {
             for (int i = 0; i < servers.size(); i++) {
                 if (servers.get(i) == null) {
                     continue;
                 }
-                Log.d("wjj","=====servers=========="+servers.get(i));
+                Log.d("wjj", "=====servers==========" + servers.get(i));
                 if (NetUtils.isConnected(servers.get(i))) {
                     server = servers.get(i);
-                    Log.d("wjj","=====Connected=========="+server);
+                    Log.d("wjj", "=====Connected==========" + server);
                     return server;
                 }
             }
         }
-
+        server = "http://www.weijaky.top";
         return server;
     }
 

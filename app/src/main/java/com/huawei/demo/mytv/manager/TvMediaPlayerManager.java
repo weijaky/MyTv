@@ -29,16 +29,19 @@ import android.view.KeyEvent;
 import android.view.SurfaceHolder;
 import android.view.View;
 
+import com.huawei.demo.mytv.data.LocalConfig;
+
 import java.io.IOException;
 import java.util.List;
 
-public class TvMediaPlayerManager extends PlaybackControlGlue implements
-        OnItemViewSelectedListener {
+public class TvMediaPlayerManager extends PlaybackControlGlue implements OnItemViewSelectedListener {
 
     public static final int NO_REPEAT = 0;
     public static final int REPEAT_ONE = 1;
     public static final int REPEAT_ALL = 2;
 
+    private static final String TAG = TvMediaPlayerManager.class.getSimpleName();
+    private static final boolean DEBUG = LocalConfig.getConfig().isDebug();
     private static final long MEDIA_SESSION_ACTIONS =
             PlaybackStateCompat.ACTION_PLAY
                     | PlaybackStateCompat.ACTION_PAUSE
@@ -50,22 +53,24 @@ public class TvMediaPlayerManager extends PlaybackControlGlue implements
                     | PlaybackStateCompat.ACTION_PREPARE
                     | PlaybackStateCompat.ACTION_SEEK_TO;
 
-    public static final int FAST_FORWARD_REWIND_STEP = 10 * 1000; // in milliseconds
-    public static final int FAST_FORWARD_REWIND_REPEAT_DELAY = 200; // in milliseconds
-    private static final String TAG = TvMediaPlayerManager.class.getSimpleName();
-    protected final PlaybackControlsRow.ThumbsDownAction mThumbsDownAction;
-    protected final PlaybackControlsRow.ThumbsUpAction mThumbsUpAction;
-    protected final PlaybackControlsRow.PictureInPictureAction mPictureInPictureAction;
-    protected final PlaybackControlsRow.ClosedCaptioningAction mClosedCaptioningAction;
-    MediaPlayer mPlayer = new MediaPlayer();
-    MediaSessionCompat mMediaSession;
-    PipCallback pipCallback;
-    private final PlaybackControlsRow.RepeatAction mRepeatAction;
+    public static final int FAST_FORWARD_REWIND_STEP = 10 * 1000;
+    public static final int FAST_FORWARD_REWIND_REPEAT_DELAY = 200;
+
+
+    protected PlaybackControlsRow.ThumbsDownAction mThumbsDownAction;
+    protected PlaybackControlsRow.ThumbsUpAction mThumbsUpAction;
+    protected PlaybackControlsRow.PictureInPictureAction mPictureInPictureAction;
+    protected PlaybackControlsRow.ClosedCaptioningAction mClosedCaptioningAction;
+    protected PlaybackControlsRow.RepeatAction mRepeatAction;
+    protected MediaPlayer mPlayer = new MediaPlayer();
+    protected MediaSessionCompat mMediaSession;
+    protected PipCallback pipCallback;
+
     private Runnable mRunnable;
     private Handler mHandler = new Handler();
-    private boolean mInitialized = false; // true when the MediaPlayer is prepared/initialized
-    private Action mSelectedAction; // the action which is currently selected by the user
-    private long mLastKeyDownEvent = 0L; // timestamp when the last DPAD_CENTER KEY_DOWN occurred
+    private boolean mInitialized = false;
+    private Action mSelectedAction;
+    private long mLastKeyDownEvent = 0L;
     private Uri mMediaSourceUri = null;
     private String mMediaSourcePath = null;
     private MediaPlayer.OnCompletionListener mOnCompletionListener;
@@ -77,53 +82,40 @@ public class TvMediaPlayerManager extends PlaybackControlGlue implements
 
     private boolean isInPictureInPictureMode;
 
-    /**
-     * Sets the drawable representing cover image.
-     */
+
     public void setCover(Drawable cover) {
         this.mCover = cover;
     }
 
-    /**
-     * Sets the artist name.
-     */
     public void setArtist(String artist) {
         this.mArtist = artist;
     }
 
-    /**
-     * Sets the media title.
-     */
     public void setTitle(String title) {
         this.mTitle = title;
     }
 
-    /**
-     * Sets the url for the video.
-     */
     public void setVideoUrl(String videoUrl) {
         setMediaSource(videoUrl);
         onMetadataChanged();
     }
 
-    /**
-     * Constructor.
-     */
+    public void setVideoUri(Uri videoUri) {
+        setMediaSource(videoUri);
+        onMetadataChanged();
+    }
+
     public TvMediaPlayerManager(Context context) {
         this(context, new int[]{1}, new int[]{1});
     }
 
-    /**
-     * Constructor.
-     */
-    public TvMediaPlayerManager(
-            Context context, int[] fastForwardSpeeds, int[] rewindSpeeds) {
+    public TvMediaPlayerManager(Context context, int[] fastForwardSpeeds, int[] rewindSpeeds) {
         super(context, fastForwardSpeeds, rewindSpeeds);
-
-
         initMediaSession(context);
+        initActions();
+    }
 
-        // Instantiate secondary actions
+    private void initActions() {
         mRepeatAction = new PlaybackControlsRow.RepeatAction(getContext());
         mThumbsDownAction = new PlaybackControlsRow.ThumbsDownAction(getContext());
         mThumbsUpAction = new PlaybackControlsRow.ThumbsUpAction(getContext());
@@ -132,15 +124,13 @@ public class TvMediaPlayerManager extends PlaybackControlGlue implements
 
         mThumbsDownAction.setIndex(PlaybackControlsRow.ThumbsAction.INDEX_OUTLINE);
         mThumbsUpAction.setIndex(PlaybackControlsRow.ThumbsAction.INDEX_OUTLINE);
-
-
     }
 
     private void initMediaSession(Context context) {
         if (mMediaSession != null) {
             return;
         }
-        Log.d("wjj", "=========initMediaSession==================");
+        if (DEBUG) Log.d(TAG, "=========initMediaSession==================");
         mPlaybackStateCompat = new PlaybackStateCompat.Builder()
                 .setActions(MEDIA_SESSION_ACTIONS)
                 .setState(PlaybackStateCompat.STATE_NONE, 0, 1.0f).build();
@@ -164,20 +154,15 @@ public class TvMediaPlayerManager extends PlaybackControlGlue implements
         }
     }
 
-    /**
-     * Will reset the {@link MediaPlayer} and the glue such that a new file can be played. You are
-     * not required to call this method before playing the first file. However you have to call it
-     * before playing a second one.
-     */
     public void reset() {
-        Log.d("wjj", "===========reset============");
+        if (DEBUG) Log.d(TAG, "===========reset============");
         changeToUnitialized();
         mPlayer.reset();
     }
 
     void changeToUnitialized() {
         if (mInitialized) {
-            Log.d("wjj", "===========changeToUnitialized============");
+            if (DEBUG) Log.d(TAG, "===========changeToUnitialized============");
             mInitialized = false;
             List<PlayerCallback> callbacks = getPlayerCallbacks();
             if (callbacks != null) {
@@ -188,11 +173,8 @@ public class TvMediaPlayerManager extends PlaybackControlGlue implements
         }
     }
 
-    /**
-     * Release internal MediaPlayer. Should not use the object after call release().
-     */
     public void release() {
-        Log.d("wjj", "===========release============");
+        if (DEBUG) Log.d(TAG, "===========release============");
         changeToUnitialized();
         mPlayer.release();
     }
@@ -246,8 +228,6 @@ public class TvMediaPlayerManager extends PlaybackControlGlue implements
 
     @Override
     public void onActionClicked(Action action) {
-        // If either 'Shuffle' or 'Repeat' has been clicked we need to make sure the actions index
-        // is incremented and the UI updated such that we can display the new state.
         super.onActionClicked(action);
         if (action instanceof PlaybackControlsRow.RepeatAction) {
             ((PlaybackControlsRow.RepeatAction) action).nextIndex();
@@ -275,17 +255,13 @@ public class TvMediaPlayerManager extends PlaybackControlGlue implements
 
     @Override
     public boolean onKey(View v, int keyCode, KeyEvent event) {
-        // This method is overridden in order to make implement fast forwarding and rewinding when
-        // the user keeps the corresponding action pressed.
-        // We only consume DPAD_CENTER Action_DOWN events on the Fast-Forward and Rewind action and
-        // only if it has not been pressed in the last X milliseconds.
-        boolean consume = mSelectedAction instanceof PlaybackControlsRow.RewindAction;
-        consume = consume || mSelectedAction instanceof PlaybackControlsRow.FastForwardAction;
-        consume = consume && mInitialized;
-        consume = consume && event.getKeyCode() == KeyEvent.KEYCODE_DPAD_CENTER;
-        consume = consume && event.getAction() == KeyEvent.ACTION_DOWN;
-        consume = consume && System
-                .currentTimeMillis() - mLastKeyDownEvent > FAST_FORWARD_REWIND_REPEAT_DELAY;
+        //如果按下快退或者快进键
+        boolean consume = mSelectedAction instanceof PlaybackControlsRow.RewindAction ||
+                mSelectedAction instanceof PlaybackControlsRow.FastForwardAction;
+        consume = consume && mInitialized &&
+                event.getKeyCode() == KeyEvent.KEYCODE_DPAD_CENTER &&
+                event.getAction() == KeyEvent.ACTION_DOWN &&
+                System.currentTimeMillis() - mLastKeyDownEvent > FAST_FORWARD_REWIND_REPEAT_DELAY;
 
         if (consume) {
             mLastKeyDownEvent = System.currentTimeMillis();
@@ -300,6 +276,7 @@ public class TvMediaPlayerManager extends PlaybackControlGlue implements
             return true;
         }
 
+        //其他情况
         return super.onKey(v, keyCode, event);
     }
 
@@ -311,11 +288,6 @@ public class TvMediaPlayerManager extends PlaybackControlGlue implements
 
     @Override
     public boolean isMediaPlaying() {
-        Log.d("", "==mInitialized=" + mInitialized);
-        if (mPlayer != null) {
-//            Log.d("","==mInitialized="+mPlayer.isPlaying());
-        }
-
         return mInitialized && mPlayer.isPlaying();
     }
 
@@ -367,7 +339,7 @@ public class TvMediaPlayerManager extends PlaybackControlGlue implements
         if (!mInitialized || mPlayer.isPlaying()) {
             return;
         }
-        Log.d("wjj", "=====play============");
+        if(DEBUG) Log.d(TAG, "=====play============");
         mPlayer.start();
         onMetadataChanged();
         onStateChanged();
@@ -378,16 +350,13 @@ public class TvMediaPlayerManager extends PlaybackControlGlue implements
     @Override
     public void pause() {
         if (isMediaPlaying()) {
+            if(DEBUG) Log.d(TAG, "=====pause============");
             mPlayer.pause();
             onStateChanged();
         }
         updatePlaybackState();
     }
 
-    /**
-     * Sets the playback mode. It currently support no repeat, repeat once and infinite
-     * loop mode.
-     */
     public void setMode(int mode) {
         switch (mode) {
             case NO_REPEAT:
@@ -418,12 +387,6 @@ public class TvMediaPlayerManager extends PlaybackControlGlue implements
         }
     }
 
-    /**
-     * Called whenever the user presses fast-forward/rewind or when the user keeps the
-     * corresponding action pressed.
-     *
-     * @param newPosition The new position of the media track in milliseconds.
-     */
     protected void seekTo(int newPosition) {
         if (!mInitialized) {
             return;
@@ -431,37 +394,21 @@ public class TvMediaPlayerManager extends PlaybackControlGlue implements
         mPlayer.seekTo(newPosition);
     }
 
-    /**
-     * Sets the media source of the player witha given URI.
-     *
-     * @return Returns <code>true</code> if uri represents a new media; <code>false</code>
-     * otherwise.
-     * @see MediaPlayer#setDataSource(String)
-     */
     public boolean setMediaSource(Uri uri) {
 
         if (mMediaSourceUri != null ? mMediaSourceUri.equals(uri) : uri == null) {
             return false;
         }
-        Log.d("wjj", "=======setMediaSource=====2======" + uri.getPath());
         mMediaSourceUri = uri;
         mMediaSourcePath = null;
         prepareMediaForPlaying();
         return true;
     }
 
-    /**
-     * Sets the media source of the player with a String path URL.
-     *
-     * @return Returns <code>true</code> if path represents a new media; <code>false</code>
-     * otherwise.
-     * @see MediaPlayer#setDataSource(String)
-     */
     public boolean setMediaSource(String path) {
         if (mMediaSourcePath != null ? mMediaSourcePath.equals(path) : path == null) {
             return false;
         }
-        Log.d("wjj", "=======setMediaSource====1=======" + path);
         mMediaSourceUri = null;
         mMediaSourcePath = path;
         prepareMediaForPlaying();
@@ -487,7 +434,6 @@ public class TvMediaPlayerManager extends PlaybackControlGlue implements
         mPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
             @Override
             public void onPrepared(MediaPlayer mp) {
-                Log.d("wjj", "==========onPrepared============");
                 mInitialized = true;
                 List<PlayerCallback> callbacks = getPlayerCallbacks();
                 if (callbacks != null) {
@@ -513,26 +459,9 @@ public class TvMediaPlayerManager extends PlaybackControlGlue implements
         });
         mPlayer.prepareAsync();
 
-//        try {
-//            mPlayer.prepare();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
         onStateChanged();
     }
 
-    /**
-     * This is a listener implementation for the {@link OnItemViewSelectedListener}.
-     * This implementation is required in order to detect KEY_DOWN events
-     * on the {@link android.support.v17.leanback.widget.PlaybackControlsRow.FastForwardAction} and
-     * {@link android.support.v17.leanback.widget.PlaybackControlsRow.RewindAction}. Thus you
-     * should <u>NOT</u> set another {@link OnItemViewSelectedListener} on your
-     * Fragment. Instead, override this method and call its super (this)
-     * implementation.
-     *
-     * @see OnItemViewSelectedListener#onItemSelected(
-     *Presenter.ViewHolder, Object, RowPresenter.ViewHolder, Object)
-     */
     @Override
     public void onItemSelected(Presenter.ViewHolder itemViewHolder, Object item,
                                RowPresenter.ViewHolder rowViewHolder, Row row) {
@@ -571,10 +500,7 @@ public class TvMediaPlayerManager extends PlaybackControlGlue implements
         pipCallback = callback;
     }
 
-    /**
-     * Implements {@link SurfaceHolder.Callback} that can then be set on the
-     * {@link PlaybackGlueHost}.
-     */
+
     class VideoPlayerSurfaceHolderCallback implements SurfaceHolder.Callback {
         @Override
         public void surfaceCreated(SurfaceHolder surfaceHolder) {
@@ -621,7 +547,7 @@ public class TvMediaPlayerManager extends PlaybackControlGlue implements
         @Override
         public void onStop() {
             super.onStop();
-//            updatePlaybackState();
+            updatePlaybackState();
         }
 
         @Override
@@ -633,7 +559,7 @@ public class TvMediaPlayerManager extends PlaybackControlGlue implements
     public void updatePlaybackState() {
         int state = isPlaying() ? PlaybackStateCompat.STATE_PLAYING : PlaybackStateCompat.STATE_PAUSED;
 
-        Log.d("wjj", "============updatePlaybackState=====state=====" + state);
+        if(DEBUG) Log.d(TAG, "============updatePlaybackState=====state=====" + state);
         mMediaSession.setPlaybackState(
                 new PlaybackStateCompat.Builder()
                         .setActions(MEDIA_SESSION_ACTIONS)
@@ -660,5 +586,7 @@ public class TvMediaPlayerManager extends PlaybackControlGlue implements
     public int getVideoHeight() {
         return mPlayer.getVideoHeight();
     }
+
+
 }
 

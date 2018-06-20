@@ -33,12 +33,16 @@ import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.text.Html;
 import android.util.Log;
+import android.view.MotionEvent;
+import android.view.View;
 import android.widget.Toast;
 
 import com.huawei.demo.mytv.data.LocalDataManager;
+import com.huawei.demo.mytv.handler.SurfaceViewTouchHandler;
 import com.huawei.demo.mytv.manager.TvMediaPlayerManager;
 import com.huawei.demo.mytv.activity.DetailsActivity;
 import com.huawei.demo.mytv.data.Movie;
+import com.huawei.demo.mytv.utils.NetUtils;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -55,17 +59,16 @@ public class PlaybackVideoFragment extends VideoSupportFragment {
 
     private TvMediaPlayerManager mMediaPlayerGlue;
     private MediaControllerCompat mMediaController;
-    private Pattern mMediaPattern;
-    public static final String MEDIA_PATTERN = "(http[s]?://)+([\\w-]+\\.)+[\\w-]+([\\w-./?%&=]*)?";
+
     private Uri uri;
+    private VideoSupportFragmentGlueHost glueHost;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        VideoSupportFragmentGlueHost glueHost = new VideoSupportFragmentGlueHost(PlaybackVideoFragment.this);
+        glueHost = new VideoSupportFragmentGlueHost(PlaybackVideoFragment.this);
         initMediaGlue(glueHost);
-
     }
 
     private void initMediaGlue(VideoSupportFragmentGlueHost glueHost) {
@@ -102,7 +105,6 @@ public class PlaybackVideoFragment extends VideoSupportFragment {
         });
 
         initMediaController();
-
         setVideo(getActivity().getIntent());
 
     }
@@ -111,10 +113,11 @@ public class PlaybackVideoFragment extends VideoSupportFragment {
         if (intent == null) {
             return;
         }
-        uri = getIntentUri(intent);
+        uri = NetUtils.getIntentUri(intent);
 
-        Log.d("wjj", "==============" + uri.getPath());
+
         if (uri != null) {
+            if(DEBUG) Log.d(TAG, "==============" + uri.getPath());
             checkSelfPermission();
         } else {
             final Movie movie = (Movie) intent.getSerializableExtra(DetailsActivity.MOVIE);
@@ -126,15 +129,10 @@ public class PlaybackVideoFragment extends VideoSupportFragment {
     }
 
     private void checkSelfPermission() {
-        if (ContextCompat.checkSelfPermission(getActivity(),
-                Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                != PackageManager.PERMISSION_GRANTED) {
-
-            ActivityCompat.requestPermissions(getActivity(),
-                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                    0);
+        if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},0);
         } else {
-            mMediaPlayerGlue.setVideoUrl(uri.getPath());
+            mMediaPlayerGlue.setVideoUri(uri);
         }
     }
 
@@ -171,13 +169,15 @@ public class PlaybackVideoFragment extends VideoSupportFragment {
     @Override
     public void onStart() {
         super.onStart();
-        mMediaPlayerGlue.play();
+//        getSurfaceView().setOnTouchListener(new SurfaceViewTouchHandler(getActivity(), glueHost));
     }
 
     @Override
     public void onStop() {
         super.onStop();
-        mMediaPlayerGlue.pause();
+        if(getActivity().isInPictureInPictureMode()){
+            mMediaPlayerGlue.pause();
+        }
     }
 
     @Override
@@ -189,40 +189,7 @@ public class PlaybackVideoFragment extends VideoSupportFragment {
         }
     }
 
-    public Uri getIntentUri(Intent intent) {
-        Uri result = null;
-        if (intent != null) {
-            result = intent.getData();
-            if (result == null) {
-                final String type = intent.getType();
-                String sharedUrl = intent.getStringExtra(Intent.EXTRA_TEXT);
-                if (!StringUtils.isEmpty(sharedUrl)) {
-                    if ("text/plain".equals(type) && sharedUrl != null) {
-                        result = getTextUri(sharedUrl);
-                    } else if ("text/html".equals(type) && sharedUrl != null) {
-                        result = getTextUri(Html.fromHtml(sharedUrl).toString());
-                    }
-                } else {
-                    Parcelable parce = intent.getParcelableExtra(Intent.EXTRA_STREAM);
-                    if (parce != null)
-                        result = (Uri) parce;
-                }
-            }
-        }
-        return result;
-    }
 
-    private Uri getTextUri(String sharedUrl) {
-        mMediaPattern = Pattern.compile(MEDIA_PATTERN);
-        Matcher matcher = mMediaPattern.matcher(sharedUrl);
-        if (matcher.find()) {
-            sharedUrl = matcher.group();
-            if (!StringUtils.isEmpty(sharedUrl)) {
-                return Uri.parse(sharedUrl);
-            }
-        }
-        return null;
-    }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
@@ -235,4 +202,6 @@ public class PlaybackVideoFragment extends VideoSupportFragment {
         }
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
+
+
 }

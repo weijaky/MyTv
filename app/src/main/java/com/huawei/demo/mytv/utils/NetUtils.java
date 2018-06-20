@@ -1,11 +1,16 @@
 package com.huawei.demo.mytv.utils;
 
 import android.content.Context;
+import android.content.Intent;
 import android.net.Uri;
+import android.os.Parcelable;
+import android.text.Html;
 import android.util.Log;
 
 import com.bumptech.glide.Glide;
 import com.huawei.demo.mytv.data.LocalDataManager;
+
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -13,6 +18,8 @@ import java.io.LineNumberReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created by Jack on 2018/6/16.
@@ -20,6 +27,7 @@ import java.net.URL;
 
 public class NetUtils {
     private static final boolean DEBUG = LocalDataManager.getConfig().isDebug();
+    public static final String MEDIA_PATTERN = "(http[s]?://)+([\\w-]+\\.)+[\\w-]+([\\w-./?%&=]*)?";
 
     public static boolean pingTest(String address) {
         Process process = null;
@@ -70,8 +78,38 @@ public class NetUtils {
         return isConn;
     }
 
-//    public boolean connectTest(Context context, String address){
-//        Uri url = Uri.parse(address);
-//        Glide.with(context).load(address);
-//    }
+    public static Uri getIntentUri(Intent intent) {
+        Uri result = null;
+        if (intent != null) {
+            result = intent.getData();
+            if (result == null) {
+                final String type = intent.getType();
+                String sharedUrl = intent.getStringExtra(Intent.EXTRA_TEXT);
+                if (!StringUtils.isEmpty(sharedUrl)) {
+                    if ("text/plain".equals(type) && sharedUrl != null) {
+                        result = getTextUri(sharedUrl);
+                    } else if ("text/html".equals(type) && sharedUrl != null) {
+                        result = getTextUri(Html.fromHtml(sharedUrl).toString());
+                    }
+                } else {
+                    Parcelable parce = intent.getParcelableExtra(Intent.EXTRA_STREAM);
+                    if (parce != null)
+                        result = (Uri) parce;
+                }
+            }
+        }
+        return result;
+    }
+
+    private static Uri getTextUri(String sharedUrl) {
+        Pattern pattern = Pattern.compile(MEDIA_PATTERN);
+        Matcher matcher = pattern.matcher(sharedUrl);
+        if (matcher.find()) {
+            sharedUrl = matcher.group();
+            if (!StringUtils.isEmpty(sharedUrl)) {
+                return Uri.parse(sharedUrl);
+            }
+        }
+        return null;
+    }
 }
