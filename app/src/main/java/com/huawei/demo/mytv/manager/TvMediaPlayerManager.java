@@ -197,8 +197,9 @@ public class TvMediaPlayerManager extends PlaybackControlGlue implements OnItemV
         secondaryActionsAdapter.add(mRepeatAction);
         secondaryActionsAdapter.add(mThumbsDownAction);
         secondaryActionsAdapter.add(mThumbsUpAction);
-        secondaryActionsAdapter.add(mClosedCaptioningAction);
         secondaryActionsAdapter.add(mPictureInPictureAction);
+        secondaryActionsAdapter.add(mClosedCaptioningAction);
+
     }
 
     /**

@@ -59,19 +59,19 @@ public class PlaybackVideoFragment extends VideoSupportFragment {
 
         glueHost = new VideoSupportFragmentGlueHost(PlaybackVideoFragment.this);
         initMediaGlue(glueHost);
-        ((PlaybackActivity) getActivity()).registerTouchHandler(new VideoTouchHandler(getActivity(), glueHost));
-    }
-
-    @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
         handler = new VideoTouchHandler(getActivity(), glueHost);
         ((PlaybackActivity) getActivity()).registerTouchHandler(handler);
     }
 
     @Override
-    public void onDetach() {
-        super.onDetach();
+    public void onAttach(Context context) {
+        super.onAttach(context);
+
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
         ((PlaybackActivity) getActivity()).unRegisterTouchHandler(handler);
     }
 
