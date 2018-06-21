@@ -24,7 +24,10 @@ public class VideoTouchHandler implements TouchHandler, GestureDetector.OnGestur
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        return mGestureDetector.onTouchEvent(event);
+        if(mGestureDetector.onTouchEvent(event)){
+            return true;
+        }
+        return false;
     }
 
     @Override
@@ -44,7 +47,7 @@ public class VideoTouchHandler implements TouchHandler, GestureDetector.OnGestur
         } else {
             glueHost.showControlsOverlay(true);
         }
-        return true;
+        return false;
     }
 
     @Override

@@ -15,6 +15,7 @@
 package com.huawei.demo.mytv.fragment;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -50,6 +51,7 @@ public class PlaybackVideoFragment extends VideoSupportFragment {
 
     private Uri uri;
     private VideoSupportFragmentGlueHost glueHost;
+    private VideoTouchHandler handler;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -58,6 +60,19 @@ public class PlaybackVideoFragment extends VideoSupportFragment {
         glueHost = new VideoSupportFragmentGlueHost(PlaybackVideoFragment.this);
         initMediaGlue(glueHost);
         ((PlaybackActivity) getActivity()).registerTouchHandler(new VideoTouchHandler(getActivity(), glueHost));
+    }
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        handler = new VideoTouchHandler(getActivity(), glueHost);
+        ((PlaybackActivity) getActivity()).registerTouchHandler(handler);
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        ((PlaybackActivity) getActivity()).unRegisterTouchHandler(handler);
     }
 
     private void initMediaGlue(VideoSupportFragmentGlueHost glueHost) {
@@ -182,7 +197,7 @@ public class PlaybackVideoFragment extends VideoSupportFragment {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == 0) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                mMediaPlayerGlue.setVideoUrl(uri.getPath());
+                mMediaPlayerGlue.setVideoUri(uri);
             } else {
                 Toast.makeText(getActivity(), "Permission Denied", Toast.LENGTH_SHORT).show();
             }
