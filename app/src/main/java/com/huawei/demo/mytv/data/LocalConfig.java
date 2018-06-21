@@ -23,6 +23,7 @@ public class LocalConfig {
     private List<String> movieCategory;
     private String movieDir;
     private String imageDir;
+    private String testRes;
     private List<String> movieTitle;
     private List<String> movieDescription;
     private List<String> studio;
@@ -128,5 +129,13 @@ public class LocalConfig {
 
     public void setStudio(List<String> studio) {
         this.studio = studio;
+    }
+
+    public String getTestRes() {
+        return testRes;
+    }
+
+    public void setTestRes(String testRes) {
+        this.testRes = testRes;
     }
 }

@@ -12,6 +12,7 @@ import com.huawei.demo.mytv.data.LocalDataManager;
 
 import org.apache.commons.lang3.StringUtils;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
@@ -62,7 +63,11 @@ public class NetUtils {
         HttpURLConnection conn = null;
 
         try {
-            URL url = new URL(ipAddr);
+            URL url = new URL(ipAddr +
+                    LocalDataManager.getConfig().getMovieDir() +
+                    LocalDataManager.getConfig().getImageDir() +
+                    File.separator +
+                    LocalDataManager.getConfig().getTestRes());
             conn = (HttpURLConnection) url.openConnection();
             conn.setConnectTimeout(1000);
             if (conn.getResponseCode() == 200) {
