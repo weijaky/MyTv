@@ -569,6 +569,9 @@ public class TvMediaPlayerManager extends PlaybackControlGlue implements OnItemV
     }
 
     public void setInPictureInPictureMode(boolean inPictureInPictureMode) {
+        if (getHost() != null) {
+            getHost().notifyPlaybackRowChanged();
+        }
         isInPictureInPictureMode = inPictureInPictureMode;
     }
 

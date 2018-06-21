@@ -134,7 +134,7 @@ public class PlaybackVideoFragment extends VideoSupportFragment {
 
     private void checkSelfPermission() {
         if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 0);
+            PlaybackVideoFragment.this.requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 0);
         } else {
             mMediaPlayerGlue.setVideoUri(uri);
         }
@@ -197,7 +197,7 @@ public class PlaybackVideoFragment extends VideoSupportFragment {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == 0) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                mMediaPlayerGlue.setVideoUri(uri);
+                checkSelfPermission();
             } else {
                 Toast.makeText(getActivity(), "Permission Denied", Toast.LENGTH_SHORT).show();
             }
