@@ -21,6 +21,9 @@ import android.util.Log;
 import android.view.MotionEvent;
 
 import com.huawei.demo.mytv.fragment.PlaybackVideoFragment;
+import com.huawei.demo.mytv.handler.TouchHandler;
+
+import java.util.ArrayList;
 
 /**
  * Loads {@link PlaybackVideoFragment}.
@@ -28,6 +31,7 @@ import com.huawei.demo.mytv.fragment.PlaybackVideoFragment;
 public class PlaybackActivity extends FragmentActivity {
 
     private PlaybackVideoFragment mPlaybackVideoFragment;
+    private ArrayList<TouchHandler> mTouchHandlers = new ArrayList<TouchHandler>();
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -46,4 +50,21 @@ public class PlaybackActivity extends FragmentActivity {
         mPlaybackVideoFragment.setVideo(intent);
     }
 
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        for (TouchHandler handler : mTouchHandlers) {
+            if (handler.onTouchEvent(ev)) {
+                return true;
+            }
+        }
+        return super.dispatchTouchEvent(ev);
+    }
+
+    public void registerTouchHandler(TouchHandler listener) {
+        mTouchHandlers.add(listener);
+    }
+
+    public void unRegisterTouchHandler(TouchHandler listener) {
+        mTouchHandlers.remove(listener);
+    }
 }

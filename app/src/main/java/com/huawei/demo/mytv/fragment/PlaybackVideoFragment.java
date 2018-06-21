@@ -19,7 +19,6 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.os.RemoteException;
 import android.support.annotation.NonNull;
 import android.support.v17.leanback.app.VideoSupportFragment;
@@ -31,28 +30,17 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
-import android.text.Html;
 import android.util.Log;
-import android.view.MotionEvent;
-import android.view.View;
 import android.widget.Toast;
 
+import com.huawei.demo.mytv.activity.PlaybackActivity;
 import com.huawei.demo.mytv.data.LocalDataManager;
-import com.huawei.demo.mytv.handler.SurfaceViewTouchHandler;
+import com.huawei.demo.mytv.handler.VideoTouchHandler;
 import com.huawei.demo.mytv.manager.TvMediaPlayerManager;
 import com.huawei.demo.mytv.activity.DetailsActivity;
 import com.huawei.demo.mytv.data.Movie;
 import com.huawei.demo.mytv.utils.NetUtils;
 
-import org.apache.commons.lang3.StringUtils;
-
-import java.net.URI;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-/**
- * Handles video playback with media controls.
- */
 public class PlaybackVideoFragment extends VideoSupportFragment {
     private static final String TAG = "PlaybackVideoFragment";
     private static final boolean DEBUG = LocalDataManager.getConfig().isDebug();
@@ -69,6 +57,7 @@ public class PlaybackVideoFragment extends VideoSupportFragment {
 
         glueHost = new VideoSupportFragmentGlueHost(PlaybackVideoFragment.this);
         initMediaGlue(glueHost);
+        ((PlaybackActivity) getActivity()).registerTouchHandler(new VideoTouchHandler(getActivity(), glueHost));
     }
 
     private void initMediaGlue(VideoSupportFragmentGlueHost glueHost) {
@@ -117,7 +106,7 @@ public class PlaybackVideoFragment extends VideoSupportFragment {
 
 
         if (uri != null) {
-            if(DEBUG) Log.d(TAG, "==============" + uri.getPath());
+            if (DEBUG) Log.d(TAG, "==============" + uri.getPath());
             checkSelfPermission();
         } else {
             final Movie movie = (Movie) intent.getSerializableExtra(DetailsActivity.MOVIE);
@@ -130,7 +119,7 @@ public class PlaybackVideoFragment extends VideoSupportFragment {
 
     private void checkSelfPermission() {
         if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},0);
+            ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 0);
         } else {
             mMediaPlayerGlue.setVideoUri(uri);
         }
@@ -169,13 +158,12 @@ public class PlaybackVideoFragment extends VideoSupportFragment {
     @Override
     public void onStart() {
         super.onStart();
-//        getSurfaceView().setOnTouchListener(new SurfaceViewTouchHandler(getActivity(), glueHost));
     }
 
     @Override
     public void onStop() {
         super.onStop();
-        if(getActivity().isInPictureInPictureMode()){
+        if (getActivity().isInPictureInPictureMode()) {
             mMediaPlayerGlue.pause();
         }
     }
@@ -188,7 +176,6 @@ public class PlaybackVideoFragment extends VideoSupportFragment {
 
         }
     }
-
 
 
     @Override
