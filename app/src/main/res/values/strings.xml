@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">MyTv</string>
+    <string name="app_name">小琴TV</string>
     <string name="browse_title"><![CDATA[HUAWEI 影视]]></string>
     <string name="related_movies">相关视频</string>
     <string name="grid_view">Grid View</string>

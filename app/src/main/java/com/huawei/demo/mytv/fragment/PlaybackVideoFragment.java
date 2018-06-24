@@ -119,9 +119,7 @@ public class PlaybackVideoFragment extends VideoSupportFragment {
         }
         uri = NetUtils.getIntentUri(intent);
 
-
         if (uri != null) {
-            if (DEBUG) Log.d(TAG, "==============" + uri.getPath());
             checkSelfPermission();
         } else {
             final Movie movie = (Movie) intent.getSerializableExtra(DetailsActivity.MOVIE);
@@ -156,6 +154,7 @@ public class PlaybackVideoFragment extends VideoSupportFragment {
                 @Override
                 public void onPlaybackStateChanged(PlaybackStateCompat state) {
                     super.onPlaybackStateChanged(state);
+//                    mMediaPlayerGlue.pause();
                 }
 
                 @Override

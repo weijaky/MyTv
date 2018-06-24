@@ -42,7 +42,7 @@ ext {
     supportLibraryVersion = '26.4.0'
     glideVersion = '3.7.0'
     supportLibraryv4Version = '26.4.0'
-    compatibleSupportLibraryVersion = '26.4.0' // for projects which can't be built with sdk 24+
+    compatibleSupportLibraryVersion = '26.4.1'
     zxingCoreVersion = '3.2.1'
     zxingAndroidCoreVersion = '3.2.0'
     fileDownloadVersion = '1.4.0'

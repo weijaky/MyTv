@@ -548,6 +548,7 @@ public class TvMediaPlayerManager extends PlaybackControlGlue implements OnItemV
         @Override
         public void onStop() {
             super.onStop();
+            pause();
             updatePlaybackState();
         }
 
